@@ -1,0 +1,11 @@
+# Ignore macOS system files
+.DS_Store
+github_token.txt
+
+# Firebase cache and debug files
+.firebase/
+firebase-debug.log
+
+# Node.js modules (if applicable)
+node_modules/
+functions/node_modules/  # This excludes the node_modules folder inside the functions directory
