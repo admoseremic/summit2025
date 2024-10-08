@@ -87,7 +87,7 @@ function initializeAppFunctions() {
                 break;
             case 'spaceinvaders':
                 gameTitle.innerText = 'Space Invaders';
-                gameContent.innerHTML = '<div id="spaceInvadersGame">Stubbed out version of Space Invaders goes here!</div>';
+                gameContent.innerHTML = '<div id="spaceInvadersGame"></div>';
                 scriptSrc = 'spaceinvaders.js';
                 break;
             default:
