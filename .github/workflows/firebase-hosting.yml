@@ -21,19 +21,12 @@ jobs:
         with:
           node-version: '18'  # Use the Node.js version required by your project
 
-      # Step 3: Install dependencies for functions (if applicable)
-      - name: Install Dependencies for Functions
-        run: |
-          cd functions
-          npm install
-          cd ..
-
-      # Step 4: Install Firebase Tools
+      # Step 3: Install Firebase Tools
       - name: Install Firebase Tools
         run: npm install -g firebase-tools
 
-      # Step 5: Deploy to Firebase Hosting and Functions
-      - name: Deploy to Firebase
+      # Step 4: Deploy to Firebase Hosting only
+      - name: Deploy to Firebase Hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
-        run: firebase deploy --only hosting,functions
+        run: firebase deploy --only hosting
