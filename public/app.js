@@ -14,7 +14,7 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
         };
         firebase.initializeApp(firebaseConfig);
         window.db = firebase.database();  // Make the database reference globally available
-        
+
         // After Firebase has been initialized, we can enable the rest of the functionality
         initializeAppFunctions();
     })
@@ -47,7 +47,6 @@ function initializeAppFunctions() {
             .then(() => {
                 document.getElementById('message').innerText = 'Name submitted successfully!';
                 // After name is submitted, start listening for real-time updates
-                listenForGameChanges();
                 listenForUserTotalPoints(username);
             })
             .catch(error => {
@@ -105,51 +104,6 @@ function initializeAppFunctions() {
         }
     }
 
-    // Function to retrieve and update the leaderboard for the current game
-    function updateLeaderboard(currentGame) {
-        const leaderboardTitle = document.getElementById('leaderboardTitle');
-        const leaderboardList = document.getElementById('leaderboardList');
-
-        leaderboardTitle.innerText = currentGame.charAt(0).toUpperCase() + currentGame.slice(1) + " Leaderboard";
-
-        // Fetch all users and their scores for the current game
-        window.db.ref('attendees').on('value', (snapshot) => {
-            const attendees = snapshot.val();
-            const scores = [];
-
-            // Loop through attendees and get scores for the current game
-            for (let key in attendees) {
-                if (attendees.hasOwnProperty(key)) {
-                    const user = attendees[key];
-                    scores.push({ name: user.name, score: user[currentGame] || 0 });
-                }
-            }
-
-            // Sort the scores in descending order
-            scores.sort((a, b) => b.score - a.score);
-
-            // Clear existing leaderboard
-            leaderboardList.innerHTML = '';
-
-            // Display sorted scores on the leaderboard
-            scores.forEach((user) => {
-                const li = document.createElement('li');
-                li.innerText = `${user.name}: ${user.score} points`;
-                leaderboardList.appendChild(li);
-            });
-        });
-    }
-
-    // Listen for real-time changes to the current game and update the leaderboard
-    function listenForGameChanges() {
-        const gameRef = window.db.ref('currentGame');
-        gameRef.on('value', (snapshot) => {
-            const currentGame = snapshot.val();
-            updateGame(currentGame);
-            updateLeaderboard(currentGame);  // Update leaderboard for the current game
-        });
-    }
-
     // Listen for real-time changes to the user's total points
     function listenForUserTotalPoints(username) {
         window.db.ref('attendees').on('value', (snapshot) => {
@@ -171,8 +125,7 @@ function initializeAppFunctions() {
         document.getElementById('username').value = storedName;
         document.getElementById('message').innerText = `Welcome back, ${storedName}!`;
 
-        // Start real-time listener for current game and leaderboard
-        listenForGameChanges();
+        // Start real-time listener for the user's total points
         listenForUserTotalPoints(storedName);
     }
 

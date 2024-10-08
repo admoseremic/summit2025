@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Leaderboard</title>
+    <!-- Firebase libraries for non-modular version (compatibility) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="leaderboard.js" defer></script>
+    <style>
+        /* Default styles for the background */
+        body {
+            transition: background-color 0.5s ease;
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+
+        /* Styles for the leaderboard */
+        #leaderboard {
+            margin-top: 20px;
+        }
+
+        #leaderboard ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        #leaderboard li {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #f0f0f0;
+            font-size: 1.2em;
+        }
+    </style>
+</head>
+<body>
+    <h1>Game Leaderboard</h1>
+    <!-- Leaderboard for the current game -->
+    <div id="leaderboard">
+        <h2 id="leaderboardTitle">Leaderboard</h2>
+        <ul id="leaderboardList">
+            <!-- Leaderboard entries will be dynamically inserted here -->
+        </ul>
+    </div>
+</body>
+</html>

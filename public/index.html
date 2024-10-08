@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Leaderboard with Total Points</title>
+    <title>Game Interaction - Summit Games</title>
     <!-- Firebase libraries for non-modular version (compatibility) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -12,22 +12,6 @@
         /* Default styles for the background */
         body {
             transition: background-color 0.5s ease;
-        }
-
-        /* Styles for the leaderboard */
-        #leaderboard {
-            margin-top: 20px;
-        }
-
-        #leaderboard ul {
-            list-style-type: none;
-            padding: 0;
-        }
-
-        #leaderboard li {
-            padding: 5px;
-            margin: 5px 0;
-            background-color: #f0f0f0;
         }
 
         /* Styles for the game area */
@@ -54,14 +38,6 @@
 
     <!-- Display the user's total points -->
     <h2>Your Total Points: <span id="totalPoints">0</span></h2>
-
-    <!-- Leaderboard for the current game -->
-    <div id="leaderboard">
-        <h2 id="leaderboardTitle">Leaderboard</h2>
-        <ul id="leaderboardList">
-            <!-- Leaderboard entries will be dynamically inserted here -->
-        </ul>
-    </div>
 
     <!-- Game container -->
     <div id="gameContainer">
