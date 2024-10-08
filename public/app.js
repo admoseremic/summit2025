@@ -17,6 +17,7 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
 
         // After Firebase has been initialized, we can enable the rest of the functionality
         initializeAppFunctions();
+        listenForGameChanges(); // Start listening for game changes immediately
     })
     .catch(error => {
         console.error('Error fetching the API key:', error);
@@ -102,6 +103,15 @@ function initializeAppFunctions() {
             script.id = 'gameScript';
             document.body.appendChild(script);
         }
+    }
+
+    // Listen for real-time changes to the current game and update the game view
+    function listenForGameChanges() {
+        const gameRef = window.db.ref('currentGame');
+        gameRef.on('value', (snapshot) => {
+            const currentGame = snapshot.val();
+            updateGame(currentGame);
+        });
     }
 
     // Listen for real-time changes to the user's total points
