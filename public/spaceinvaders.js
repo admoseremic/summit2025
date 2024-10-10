@@ -1,79 +1,212 @@
-// spaceinvaders.js
+// Function to start Space Invaders
+function startSpaceInvaders() {
+    // Add canvas to gameContent
+    const canvas = document.createElement('canvas');
+    canvas.id = 'gameCanvas';
 
-// Create a simple Space Invaders game implementation
-document.addEventListener('DOMContentLoaded', function () {
-    const gameContent = document.getElementById('gameContent');
-    const gameTitle = document.getElementById('gameTitle');
+    const canvasContainer = document.getElementById('gameContent');
+    canvasContainer.appendChild(canvas);
 
-    // Update the game title
-    gameTitle.innerText = 'Space Invaders';
+    // Set initial canvas size
+    setCanvasSize(canvas);
 
-    // Create the start button
-    const startButton = document.createElement('button');
-    startButton.innerText = 'Start Game';
-    startButton.addEventListener('click', startGame);
-    gameContent.appendChild(startButton);
+    // Get canvas and context
+    const ctx = canvas.getContext('2d');
 
-    // Create a div for the player's gun station
-    const gunStation = document.createElement('div');
-    gunStation.style.position = 'absolute';
-    gunStation.style.bottom = '20px';
-    gunStation.style.left = '50%';
-    gunStation.style.width = '50px';
-    gunStation.style.height = '20px';
-    gunStation.style.backgroundColor = 'black';
-    gunStation.style.transform = 'translateX(-50%)';
-    gunStation.id = 'gunStation';
-    gameContent.appendChild(gunStation);
+    // Set background color to black
+    canvas.style.backgroundColor = 'black';
 
-    // Variables to track game state
-    let isGameRunning = false;
-    let gunStationPosition = gameContent.clientWidth / 2;
+    // Player object
+    const player = {
+        x: canvas.width / 2 - 15,
+        y: canvas.height - 50,
+        width: 30,
+        height: 30,
+        speed: 5,
+        bullets: []
+    };
 
-    // Function to start the game
-    function startGame() {
-        if (!isGameRunning) {
-            isGameRunning = true;
-            startButton.style.display = 'none';
-            gameContent.addEventListener('touchmove', moveGunStation);
-            gameContent.addEventListener('touchstart', shootProjectile);
+    // Enemy settings
+    let enemies = [];
+    const enemyWidth = 30;
+    const enemyHeight = 30;
+    const enemyPadding = 10;
+    const enemyOffsetTop = 30;
+    const enemyOffsetLeft = 10;
+    let enemyDir = 1;
+
+    // Create enemies initially
+    createEnemies();
+
+    // Control variables
+    let isTouching = false;
+    let isMouseDown = false;
+
+    // Touch controls
+    canvas.addEventListener('touchstart', (e) => {
+        isTouching = true;
+        const touch = e.touches[0];
+        player.x = touch.clientX - canvas.offsetLeft - player.width / 2;
+
+        // Shoot bullet on touchstart
+        shootBullet();
+    });
+
+    canvas.addEventListener('touchmove', (e) => {
+        if (isTouching) {
+            const touch = e.touches[0];
+            player.x = touch.clientX - canvas.offsetLeft - player.width / 2;
+        }
+    });
+
+    canvas.addEventListener('touchend', () => {
+        isTouching = false;
+    });
+
+    // Mouse controls
+    canvas.addEventListener('mousedown', (e) => {
+        isMouseDown = true;
+        player.x = e.clientX - canvas.offsetLeft - player.width / 2;
+
+        // Shoot bullet on mousedown
+        shootBullet();
+    });
+
+    canvas.addEventListener('mousemove', (e) => {
+        if (isMouseDown) {
+            player.x = e.clientX - canvas.offsetLeft - player.width / 2;
+        }
+    });
+
+    canvas.addEventListener('mouseup', () => {
+        isMouseDown = false;
+    });
+
+    // Prevent context menu on right-click
+    canvas.addEventListener('contextmenu', (e) => {
+        e.preventDefault();
+    });
+
+    // Listen for window resize and adjust canvas and game elements
+    window.addEventListener('resize', () => {
+        setCanvasSize(canvas);
+        createEnemies(); // Recreate enemies based on the new size
+        player.x = Math.min(player.x, canvas.width - player.width); // Ensure player stays within bounds
+    });
+
+    // Function to set canvas size
+    function setCanvasSize(canvas) {
+        canvas.width = Math.min(window.innerWidth * 0.9, 600); // Limit max width to 600px
+        canvas.height = Math.min(window.innerHeight * 0.5, 400); // Limit max height to 400px
+    }
+
+    // Function to create enemies
+    function createEnemies() {
+        enemies = [];
+        const enemyCols = Math.floor((canvas.width - enemyOffsetLeft * 2) / (enemyWidth + enemyPadding));
+        for (let row = 0; row < 3; row++) {
+            for (let col = 0; col < enemyCols; col++) {
+                enemies.push({
+                    x: col * (enemyWidth + enemyPadding) + enemyOffsetLeft,
+                    y: row * (enemyHeight + enemyPadding) + enemyOffsetTop,
+                    width: enemyWidth,
+                    height: enemyHeight,
+                    alive: true
+                });
+            }
         }
     }
 
-    // Function to move the gun station with touch controls
-    function moveGunStation(event) {
-        const touch = event.touches[0];
-        const touchX = touch.clientX;
-        const gameContentBounds = gameContent.getBoundingClientRect();
-        gunStationPosition = touchX - gameContentBounds.left;
-        updateGunStationPosition();
+    // Function to shoot bullets
+    function shootBullet() {
+        player.bullets.push({
+            x: player.x + player.width / 2 - 2.5,
+            y: player.y,
+            width: 5,
+            height: 10,
+            speed: 7
+        });
     }
 
-    // Function to update the position of the gun station on the screen
-    function updateGunStationPosition() {
-        gunStation.style.left = `${Math.max(0, Math.min(gunStationPosition, gameContent.clientWidth - gunStation.offsetWidth))}px`;
+    // Game loop
+    function gameLoop() {
+        update();
+        render();
+        requestAnimationFrame(gameLoop);
     }
 
-    // Function to shoot a projectile
-    function shootProjectile() {
-        const projectile = document.createElement('div');
-        projectile.style.position = 'absolute';
-        projectile.style.bottom = '40px';
-        projectile.style.left = `${gunStation.offsetLeft + gunStation.offsetWidth / 2 - 2}px`;
-        projectile.style.width = '4px';
-        projectile.style.height = '10px';
-        projectile.style.backgroundColor = 'red';
-        gameContent.appendChild(projectile);
-
-        // Animate the projectile moving upwards
-        const interval = setInterval(() => {
-            const currentBottom = parseInt(projectile.style.bottom);
-            if (currentBottom >= gameContent.clientHeight) {
-                clearInterval(interval);
-                projectile.remove();
-            } else {
-                projectile.style.bottom = `${currentBottom + 5}px`;
+    // Update game objects
+    function update() {
+        // Move enemies
+        let shiftDown = false;
+        for (let enemy of enemies) {
+            if (enemy.alive) {
+                enemy.x += enemyDir * 1;
+                if (enemy.x + enemy.width > canvas.width || enemy.x < 0) {
+                    shiftDown = true;
+                }
             }
-        }, 20);
+        }
+        if (shiftDown) {
+            enemyDir *= -1;
+            for (let enemy of enemies) {
+                enemy.y += enemyHeight;
+            }
+        }
+
+        // Move bullets
+        for (let bullet of player.bullets) {
+            bullet.y -= bullet.speed;
+        }
+
+        // Collision detection
+        for (let bullet of player.bullets) {
+            for (let enemy of enemies) {
+                if (
+                    enemy.alive &&
+                    bullet.x < enemy.x + enemy.width &&
+                    bullet.x + bullet.width > enemy.x &&
+                    bullet.y < enemy.y + enemy.height &&
+                    bullet.y + bullet.height > enemy.y
+                ) {
+                    enemy.alive = false;
+                    bullet.y = -10; // Remove bullet from screen
+                }
+            }
+        }
+
+        // Remove off-screen bullets
+        player.bullets = player.bullets.filter(bullet => bullet.y > -bullet.height);
+
+        // Keep player within canvas bounds
+        if (player.x < 0) player.x = 0;
+        if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
     }
-});
+
+    // Render game objects
+    function render() {
+        // Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Draw player
+        ctx.fillStyle = 'white';
+        ctx.fillRect(player.x, player.y, player.width, player.height);
+
+        // Draw enemies
+        for (let enemy of enemies) {
+            if (enemy.alive) {
+                ctx.fillStyle = 'green';
+                ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+            }
+        }
+
+        // Draw bullets
+        for (let bullet of player.bullets) {
+            ctx.fillStyle = 'red';
+            ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+        }
+    }
+
+    // Start the game loop
+    gameLoop();
+}

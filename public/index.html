@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Game Leaderboard with Total Points</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Summit Arcade</title>
     <!-- Firebase libraries for non-modular version (compatibility) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -15,7 +15,20 @@
     <style>
         /* Default styles for the background */
         body {
-            transition: background-color 0.5s ease;
+            background-color: black;
+            color: white;
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Styles for the container */
+        .container {
+            width: 90%;
+            margin: auto;
+            max-width: 600px;
+            padding: 10px;
         }
 
         /* Styles for the leaderboard */
@@ -29,40 +42,83 @@
         }
 
         #leaderboard li {
-            padding: 5px;
+            padding: 10px;
             margin: 5px 0;
-            background-color: #f0f0f0;
+            background-color: #333;
+            border-radius: 5px;
         }
 
         /* Styles for the game area */
         #gameContainer {
-            width: 600px;
-            height: 400px;
-            border: 2px solid #000;
-            margin-top: 20px;
+            width: 100%;
+            max-width: 600px;
+            height: 50vh;
+            border: 2px solid white;
+            margin: 20px auto;
+            position: relative;
+        }
+
+        /* Input and button styles */
+        input[type="text"] {
+            width: 70%;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            padding: 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #666;
+        }
+
+        h1, h2, p {
+            margin: 10px 0;
+        }
+
+        /* Style adjustments for mobile devices */
+        @media (max-width: 768px) {
+            #gameContainer {
+                height: 60vh;
+            }
+
+            button, input[type="text"] {
+                width: 80%;
+                font-size: 1.2em;
+            }
         }
     </style>
 </head>
 <body>
 
-    <h1>Enter Your Name</h1>
+    <div class="container">
+        <h1>Enter Your Name</h1>
 
-    <!-- Simple Form for Name Entry -->
-    <form id="nameForm" onsubmit="submitName(event)">
-        <label for="username">Your Name:</label>
-        <input type="text" id="username" placeholder="Enter your name" required>
-        <button type="submit">Submit</button>
-    </form>
+        <!-- Simple Form for Name Entry -->
+        <form id="nameForm" onsubmit="submitName(event)">
+            <label for="username">Your Name:</label><br>
+            <input type="text" id="username" placeholder="Enter your name" required><br>
+            <button type="submit">Submit</button>
+        </form>
 
-    <p id="message"></p>
+        <p id="message"></p>
 
-    <!-- Display the user's total points -->
-    <h2>Your Total Points: <span id="totalPoints">0</span></h2>
+        <!-- Display the user's total points -->
+        <h2>Your Total Points: <span id="totalPoints">0</span></h2>
 
-    <!-- Game container -->
-    <div id="gameContainer">
-        <h3 id="gameTitle">Select a game to play...</h3>
-        <div id="gameContent"></div>
+        <!-- Game container -->
+        <div id="gameContainer">
+            <h3 id="gameTitle">Select a game to play...</h3>
+            <div id="gameContent"></div>
+        </div>
     </div>
 
 </body>

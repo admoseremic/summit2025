@@ -17,7 +17,6 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
 
         // After Firebase has been initialized, we can enable the rest of the functionality
         initializeAppFunctions();
-        listenForGameChanges(); // Start listening for game changes immediately
     })
     .catch(error => {
         console.error('Error fetching the API key:', error);
@@ -65,19 +64,19 @@ function initializeAppFunctions() {
         switch (game) {
             case 'pacman':
                 gameTitle.innerText = 'Pac-Man';
-                gameContent.innerHTML = '<div id="pacmanGame">Stubbed out version of Pac-Man goes here!</div>';
+                startPacman();
                 break;
             case 'donkeykong':
                 gameTitle.innerText = 'Donkey Kong';
-                gameContent.innerHTML = '<div id="donkeyKongGame">Stubbed out version of Donkey Kong goes here!</div>';
+                startDonkeyKong();
                 break;
             case 'frogger':
                 gameTitle.innerText = 'Frogger';
-                gameContent.innerHTML = '<div id="froggerGame">Stubbed out version of Frogger goes here!</div>';
+                startFrogger();
                 break;
             case 'spaceinvaders':
                 gameTitle.innerText = 'Space Invaders';
-                gameContent.innerHTML = '<div id="spaceInvadersGame"></div>';
+                startSpaceInvaders();
                 break;
             default:
                 gameTitle.innerText = 'Select a game to play...';
@@ -121,4 +120,7 @@ function initializeAppFunctions() {
 
     // Attach the form submission handler
     document.getElementById('nameForm').addEventListener('submit', submitName);
+
+    // Start listening for game changes after all functions are defined
+    listenForGameChanges();
 }
