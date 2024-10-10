@@ -62,46 +62,26 @@ function initializeAppFunctions() {
         const gameContent = document.getElementById('gameContent');
         gameContent.innerHTML = ''; // Clear previous game content
 
-        // Remove any previously added game script
-        const oldScript = document.getElementById('gameScript');
-        if (oldScript) {
-            oldScript.remove();
-        }
-
-        let scriptSrc = '';
-
         switch (game) {
             case 'pacman':
                 gameTitle.innerText = 'Pac-Man';
                 gameContent.innerHTML = '<div id="pacmanGame">Stubbed out version of Pac-Man goes here!</div>';
-                scriptSrc = 'pacman.js';
                 break;
             case 'donkeykong':
                 gameTitle.innerText = 'Donkey Kong';
                 gameContent.innerHTML = '<div id="donkeyKongGame">Stubbed out version of Donkey Kong goes here!</div>';
-                scriptSrc = 'donkeykong.js';
                 break;
             case 'frogger':
                 gameTitle.innerText = 'Frogger';
                 gameContent.innerHTML = '<div id="froggerGame">Stubbed out version of Frogger goes here!</div>';
-                scriptSrc = 'frogger.js';
                 break;
             case 'spaceinvaders':
                 gameTitle.innerText = 'Space Invaders';
                 gameContent.innerHTML = '<div id="spaceInvadersGame"></div>';
-                scriptSrc = 'spaceinvaders.js';
                 break;
             default:
                 gameTitle.innerText = 'Select a game to play...';
                 gameContent.innerHTML = '<p>Please select a game from the list above.</p>';
-        }
-
-        if (scriptSrc) {
-            // Create a new script element for the current game
-            const script = document.createElement('script');
-            script.src = scriptSrc;
-            script.id = 'gameScript';
-            document.body.appendChild(script);
         }
     }
 
