@@ -45,12 +45,22 @@ function initializeAppFunctions() {
                 frogger: 90
             })
             .then(() => {
-                document.getElementById('message').innerText = 'Name submitted successfully!';
+                // Update the user's name display
+                const userNameElement = document.getElementById('userName');
+                const userDisplayElement = document.getElementById('userDisplay');
+                if (userNameElement && userDisplayElement) {
+                    userNameElement.innerText = username;
+                    userDisplayElement.style.display = 'block';
+                }
+                document.title = `Summit Arcade - ${username}`;
+                // Hide the modal after submission
+                document.getElementById('nameModal').style.display = 'none';
                 // After name is submitted, start listening for real-time updates
                 listenForUserTotalPoints(username);
             })
             .catch(error => {
-                document.getElementById('message').innerText = 'Error submitting name: ' + error.message;
+                // Optionally display error message
+                console.error('Error submitting name:', error);
             });
         }
     }
@@ -108,14 +118,23 @@ function initializeAppFunctions() {
         });
     }
 
-    // Check if a username is stored in localStorage and pre-fill the form
+    // Check if a username is stored in localStorage
     const storedName = localStorage.getItem('username');
     if (storedName) {
-        document.getElementById('username').value = storedName;
-        document.getElementById('message').innerText = `Welcome back, ${storedName}!`;
-
+        // Update the user's name display
+        const userNameElement = document.getElementById('userName');
+        const userDisplayElement = document.getElementById('userDisplay');
+        if (userNameElement && userDisplayElement) {
+            userNameElement.innerText = storedName;
+            userDisplayElement.style.display = 'block';
+        }
+        document.title = `Summit Arcade - ${storedName}`;
+        document.getElementById('nameModal').style.display = 'none';
         // Start real-time listener for the user's total points
         listenForUserTotalPoints(storedName);
+    } else {
+        // Show the modal if no name is found
+        document.getElementById('nameModal').style.display = 'flex';
     }
 
     // Attach the form submission handler

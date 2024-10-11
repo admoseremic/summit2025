@@ -1,29 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Meta and Title -->
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=600, initial-scale=1.0, user-scalable=no">
     <title>Summit Arcade</title>
+
     <!-- Firebase libraries for non-modular version (compatibility) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <!-- Your JavaScript files -->
     <script src="app.js" defer></script>
     <script src="pacman.js" defer></script>
     <script src="donkeykong.js" defer></script>
     <script src="frogger.js" defer></script>
     <script src="spaceinvaders.js" defer></script>
+
+    <!-- Google Font for 8-bit arcade style -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+
+    <!-- Internal CSS Styles -->
     <style>
-        /* Default styles for the background */
+        /* General Styles */
         body {
             background-color: black;
             color: white;
-            font-family: Arial, sans-serif;
+            font-family: 'Press Start 2P', Arial, sans-serif;
             text-align: center;
             margin: 0;
             padding: 0;
         }
 
-        /* Styles for the container */
+        /* Container Styles */
         .container {
             width: 90%;
             margin: auto;
@@ -31,7 +40,7 @@
             padding: 10px;
         }
 
-        /* Styles for the leaderboard */
+        /* Leaderboard Styles */
         #leaderboard {
             margin-top: 20px;
         }
@@ -48,7 +57,7 @@
             border-radius: 5px;
         }
 
-        /* Styles for the game area */
+        /* Game Area Styles */
         #gameContainer {
             width: 100%;
             max-width: 600px;
@@ -58,33 +67,62 @@
             position: relative;
         }
 
-        /* Input and button styles */
+        /* Modal Styles */
+        #nameModal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal-content {
+            background-color: #444;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        /* Input and Button Styles */
         input[type="text"] {
-            width: 70%;
+            width: 250px;
             padding: 10px;
-            margin: 5px 0;
+            margin: 10px auto 20px auto;
             border: 1px solid #ccc;
             border-radius: 5px;
+            font-family: 'Press Start 2P', Arial, sans-serif;
+            text-align: center;
+            display: block;
         }
 
         button {
+            width: 250px;
             padding: 10px;
-            background-color: #444;
+            background-color: #666;
             color: white;
             border: none;
             border-radius: 5px;
             cursor: pointer;
+            font-family: 'Press Start 2P', Arial, sans-serif;
+            margin: 0 auto;
+            display: block;
         }
 
         button:hover {
-            background-color: #666;
+            background-color: #888;
         }
 
         h1, h2, p {
             margin: 10px 0;
+            font-family: 'Press Start 2P', Arial, sans-serif;
         }
 
-        /* Style adjustments for mobile devices */
+        /* Mobile Adjustments */
         @media (max-width: 768px) {
             #gameContainer {
                 height: 60vh;
@@ -98,28 +136,47 @@
     </style>
 </head>
 <body>
+    <!-- Name Input Modal -->
+    <div id="nameModal">
+        <div class="modal-content">
+            <h1 style="width: auto; margin: auto;">Enter Your Name</h1>
+            <form id="nameForm">
+                <input type="text" id="username" placeholder="--------------------------" required>
+                <button type="submit">Submit</button>
+            </form>
+        </div>
+    </div>
 
-    <div class="container">
-        <h1>Enter Your Name</h1>
+    <!-- Main Container -->
+    <div class="container" style="margin-bottom: 50px;">
+        <!-- User Display Section -->
+        <h2 id="userDisplay" style="display: none; margin-bottom: 40px;">
+            <span id="userName" style="float: left;"></span>
+            <span id="totalPoints" style="float: right;">0</span>
+        </h2>
 
-        <!-- Simple Form for Name Entry -->
-        <form id="nameForm" onsubmit="submitName(event)">
-            <label for="username">Your Name:</label><br>
-            <input type="text" id="username" placeholder="Enter your name" required><br>
-            <button type="submit">Submit</button>
-        </form>
-
-        <p id="message"></p>
-
-        <!-- Display the user's total points -->
-        <h2>Your Total Points: <span id="totalPoints">0</span></h2>
-
-        <!-- Game container -->
-        <div id="gameContainer">
+        <!-- Game Container -->
+        <div id="gameContainer" style="margin-top: 50px;">
             <h3 id="gameTitle">Select a game to play...</h3>
             <div id="gameContent"></div>
         </div>
     </div>
 
+    <!-- JavaScript Initialization -->
+    <script>
+        // Ensure the DOM is fully loaded before running scripts
+        document.addEventListener('DOMContentLoaded', function() {
+            const storedName = localStorage.getItem('username');
+            if (storedName) {
+                const userNameElement = document.getElementById('userName');
+                const userDisplayElement = document.getElementById('userDisplay');
+                if (userNameElement && userDisplayElement) {
+                    userNameElement.innerText = storedName;
+                    userDisplayElement.style.display = 'block';
+                }
+                document.title = `Summit Arcade - ${storedName}`;
+            }
+        });
+    </script>
 </body>
 </html>
