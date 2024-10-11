@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Controller</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            background-color: #222;
+            color: white;
+            font-family: Arial, sans-serif;
+        }
+        button {
+            padding: 20px;
+            margin: 10px;
+            font-size: 20px;
+            cursor: pointer;
+            background-color: #555;
+            color: white;
+            border: none;
+            border-radius: 8px;
+        }
+        button:hover {
+            background-color: #777;
+        }
+    </style>
+    <!-- Firebase libraries -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+</head>
+<body>
+    <h1>Game Controller</h1>
+    <button onclick="setCurrentGame('pacman')">Pac-Man</button>
+    <button onclick="setCurrentGame('donkeykong')">Donkey Kong</button>
+    <button onclick="setCurrentGame('frogger')">Frogger</button>
+    <button onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
+
+    <script>
+        // Fetch the Firebase API key and configuration from the backend
+        fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
+            .then(response => response.json())
+            .then(data => {
+                // Initialize Firebase with the config that includes the dynamic API key
+                const firebaseConfig = {
+                    apiKey: data.apiKey,
+                    authDomain: "summit-games-a1f9f.firebaseapp.com",
+                    databaseURL: "https://summit-games-a1f9f-default-rtdb.firebaseio.com/",
+                    projectId: "summit-games-a1f9f",
+                    storageBucket: "summit-games-a1f9f.appspot.com",
+                    messagingSenderId: "441105165656",
+                    appId: "1:441105165656:web:277897c92f13365a98092d"
+                };
+                firebase.initializeApp(firebaseConfig);
+                window.db = firebase.database();  // Make the database reference globally available
+            })
+            .catch(error => {
+                console.error('Error fetching the API key:', error);
+            });
+
+        // Function to set the current game in the Firebase database
+        function setCurrentGame(game) {
+            if (window.db) {
+                window.db.ref('currentGame').set(game)
+                    .then(() => {
+                        console.log(`Game set to ${game} successfully.`);
+                    })
+                    .catch((error) => {
+                        console.error('Error setting the game:', error);
+                    });
+            } else {
+                console.error('Firebase is not initialized yet.');
+            }
+        }
+    </script>
+</body>
+</html>
