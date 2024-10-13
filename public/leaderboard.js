@@ -27,7 +27,7 @@ function updateLeaderboard(currentGame, db) {
     const leaderboardTitle = document.getElementById('leaderboardTitle');
     const leaderboardList = document.getElementById('leaderboardList');
 
-    leaderboardTitle.innerText = currentGame.charAt(0).toUpperCase() + currentGame.slice(1) + " Leaderboard";
+    leaderboardTitle.innerText = currentGame.charAt(0).toUpperCase() + currentGame.slice(1);
 
     // Fetch all users and their scores for the current game
     db.ref('attendees').on('value', (snapshot) => {
@@ -48,13 +48,66 @@ function updateLeaderboard(currentGame, db) {
         // Clear existing leaderboard
         leaderboardList.innerHTML = '';
 
+        // Initialize variables for rank calculation
+        let currentRank = 0;
+        let prevScore = null;
+        let playersProcessed = 0;
+
         // Display sorted scores on the leaderboard
-        scores.forEach((user) => {
+        scores.forEach((user, index) => {
+            // Increment rank only if the current score is less than the previous score
+            if (user.score !== prevScore) {
+                currentRank = playersProcessed + 1;
+            }
+            prevScore = user.score;
+            playersProcessed++;
+
             const li = document.createElement('li');
-            li.innerText = `${user.name}: ${user.score} points`;
+
+            // Create span for rank
+            const rankSpan = document.createElement('span');
+            rankSpan.textContent = `${currentRank}.`;
+            rankSpan.classList.add('rank');
+
+            // Create span for name
+            const nameSpan = document.createElement('span');
+            nameSpan.textContent = user.name;
+            nameSpan.classList.add('name');
+
+            // Create span for score
+            const scoreSpan = document.createElement('span');
+            scoreSpan.textContent = `${user.score} points`;
+            scoreSpan.classList.add('score');
+
+            // Append spans to li
+            li.appendChild(rankSpan);
+            li.appendChild(nameSpan);
+            li.appendChild(scoreSpan);
+
+            // Apply color gradient to top 20
+            if (index < 20) {
+                // Generate color based on position
+                const color = getColorGradient(index);
+                li.style.color = color;
+            }
+
             leaderboardList.appendChild(li);
         });
     });
+}
+
+// Function to generate color gradient
+function getColorGradient(index) {
+    const maxIndex = 19; // 0-based index for top 20
+    const hueStart = 60; // Starting hue (yellow)
+    const hueEnd = 0;    // Ending hue (red)
+    const lightnessStart = 50; // Starting lightness
+    const lightnessEnd = 25;   // Ending lightness
+
+    const hue = hueStart - ((hueStart - hueEnd) * (index / maxIndex));
+    const lightness = lightnessStart - ((lightnessStart - lightnessEnd) * (index / maxIndex));
+
+    return `hsl(${hue}, 100%, ${lightness}%)`;
 }
 
 // Listen for real-time changes to the current game and update the leaderboard

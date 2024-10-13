@@ -9,30 +9,87 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <script src="leaderboard.js" defer></script>
     <style>
-        /* Default styles for the background */
+        /* Global Styles */
         body {
             transition: background-color 0.5s ease;
-            font-family: Arial, sans-serif;
+            font-family: 'Press Start 2P', cursive;
             text-align: center;
+            background-color: black;
+            color: white;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Header Styles */
+        h1, h2, h3, p {
+            font-family: 'Press Start 2P', cursive;
+            margin: 10px 0;
         }
 
         /* Styles for the leaderboard */
         #leaderboard {
             margin-top: 20px;
+            width: 90%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        #leaderboardTitle {
+            font-size: 2em;
+            margin-bottom: 10px;
         }
 
         #leaderboard ul {
             list-style-type: none;
             padding: 0;
+            margin: 0; /* Reset default margin */
         }
 
         #leaderboard li {
+            display: flex;
+            align-items: center; /* Vertically center items */
             padding: 10px;
             margin: 5px 0;
-            background-color: #f0f0f0;
-            font-size: 1.2em;
+            font-size: 1.5em; /* Adjust font size as needed */
+            border-radius: 5px;
+            background-color: black;
+            color: white; /* Default color */
         }
-    </style>
+
+        /* Adjust spans within li */
+        #leaderboard li .rank {
+            width: 50px; /* Fixed width for rank */
+            text-align: left;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        #leaderboard li .name {
+            flex: 1; /* Take up remaining space */
+            text-align: left;
+        }
+
+        #leaderboard li .score {
+            min-width: 150px; /* Adjusted width to prevent wrapping */
+            text-align: right;
+            flex-shrink: 0; /* Prevent shrinking */
+        }
+
+        /* Adjust font and make responsive */
+        @media (max-width: 600px) {
+            #leaderboard li {
+                font-size: 1.3em; /* Adjusted for mobile */
+                padding: 8px;
+            }
+            #leaderboard li .rank {
+                width: 30px; /* Adjusted for smaller screens */
+            }
+            #leaderboard li .score {
+                min-width: 100px; /* Adjusted for smaller screens */
+            }
+        }
+    </style>      
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 </head>
 <body>
     <h1>Game Leaderboard</h1>
