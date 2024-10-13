@@ -47,10 +47,8 @@ function initializeAppFunctions() {
             .then(() => {
                 // Update the user's name display
                 const userNameElement = document.getElementById('userName');
-                const userDisplayElement = document.getElementById('userDisplay');
-                if (userNameElement && userDisplayElement) {
+                if (userNameElement) {
                     userNameElement.innerText = username;
-                    userDisplayElement.style.display = 'block';
                 }
                 document.title = `Summit Arcade - ${username}`;
                 // Hide the modal after submission
@@ -65,70 +63,19 @@ function initializeAppFunctions() {
         }
     }
 
-    // Function to update game based on the current game
-    function updateGame(game) {
-        const gameTitle = document.getElementById('gameTitle');
-        const gameContent = document.getElementById('gameContent');
-        gameContent.innerHTML = ''; // Clear previous game content
-
-        switch (game) {
-            case 'pacman':
-                gameTitle.innerText = 'Pac-Man';
-                startPacman();
-                break;
-            case 'donkeykong':
-                gameTitle.innerText = 'Donkey Kong';
-                startDonkeyKong();
-                break;
-            case 'frogger':
-                gameTitle.innerText = 'Frogger';
-                startFrogger();
-                break;
-            case 'spaceinvaders':
-                gameTitle.innerText = 'Space Invaders';
-                startSpaceInvaders();
-                break;
-            default:
-                gameTitle.innerText = 'Select a game to play...';
-                gameContent.innerHTML = '<p>Please select a game from the list above.</p>';
-        }
-    }
-
-    // Listen for real-time changes to the current game and update the game view
-    function listenForGameChanges() {
-        const gameRef = window.db.ref('currentGame');
-        gameRef.on('value', (snapshot) => {
-            const currentGame = snapshot.val();
-            updateGame(currentGame);
-        });
-    }
-
-    // Listen for real-time changes to the user's total points
-    function listenForUserTotalPoints(username) {
-        window.db.ref('attendees').on('value', (snapshot) => {
-            const attendees = snapshot.val();
-            for (let key in attendees) {
-                if (attendees.hasOwnProperty(key) && attendees[key].name === username) {
-                    const user = attendees[key];
-                    const totalPoints = (user.pacman || 0) + (user.donkeykong || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
-                    document.getElementById('totalPoints').innerText = totalPoints;
-                    break;
-                }
-            }
-        });
-    }
+    // Attach the form submission handler
+    document.getElementById('nameForm').addEventListener('submit', submitName);
 
     // Check if a username is stored in localStorage
     const storedName = localStorage.getItem('username');
     if (storedName) {
         // Update the user's name display
         const userNameElement = document.getElementById('userName');
-        const userDisplayElement = document.getElementById('userDisplay');
-        if (userNameElement && userDisplayElement) {
+        if (userNameElement) {
             userNameElement.innerText = storedName;
-            userDisplayElement.style.display = 'block';
         }
         document.title = `Summit Arcade - ${storedName}`;
+        // Hide the modal
         document.getElementById('nameModal').style.display = 'none';
         // Start real-time listener for the user's total points
         listenForUserTotalPoints(storedName);
@@ -137,9 +84,71 @@ function initializeAppFunctions() {
         document.getElementById('nameModal').style.display = 'flex';
     }
 
-    // Attach the form submission handler
-    document.getElementById('nameForm').addEventListener('submit', submitName);
+    // Prevent default touch behaviors
+    document.addEventListener('touchmove', function(event) {
+        event.preventDefault();
+    }, { passive: false });
+
+    document.addEventListener('gesturestart', function(event) {
+        event.preventDefault();
+    });
 
     // Start listening for game changes after all functions are defined
     listenForGameChanges();
+}
+
+// Function to update game based on the current game
+function updateGame(game) {
+  const gameTitle = document.getElementById('gameTitle');
+  const gameContent = document.getElementById('gameContent');
+  gameContent.innerHTML = ''; // Clear previous game content
+
+  switch (game) {
+      case 'pacman':
+          gameTitle.innerText = 'Pac-Man';
+          startPacman();
+          break;
+      case 'donkeykong':
+          gameTitle.innerText = 'Donkey Kong';
+          startDonkeyKong();
+          break;
+      case 'frogger':
+          gameTitle.innerText = 'Frogger';
+          startFrogger();
+          break;
+      case 'spaceinvaders':
+          gameTitle.innerText = 'Space Invaders';
+          startSpaceInvaders();
+          break;
+      default:
+          gameTitle.innerText = 'Select a game to play...';
+          gameContent.innerHTML = '<p>Please select a game from the list above.</p>';
+  }
+}
+
+// Listen for real-time changes to the current game and update the game view
+function listenForGameChanges() {
+    const gameRef = window.db.ref('currentGame');
+    gameRef.on('value', (snapshot) => {
+        const currentGame = snapshot.val();
+        updateGame(currentGame);
+    });
+}
+
+// Listen for real-time changes to the user's total points
+function listenForUserTotalPoints(username) {
+    window.db.ref('attendees').on('value', (snapshot) => {
+        const attendees = snapshot.val();
+        for (let key in attendees) {
+            if (attendees.hasOwnProperty(key) && attendees[key].name === username) {
+                const user = attendees[key];
+                const totalPoints = (user.pacman || 0) + (user.donkeykong || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
+                const totalPointsElement = document.getElementById('totalPoints');
+                if (totalPointsElement) {
+                    totalPointsElement.innerText = totalPoints;
+                }
+                break;
+            }
+        }
+    });
 }
