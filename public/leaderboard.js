@@ -22,6 +22,9 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
         console.error('Error fetching the API key:', error);
     });
 
+// Flag to check if initial data has been loaded
+let initialDataLoaded = false;
+
 // Function to retrieve and update the leaderboard for the current game
 function updateLeaderboard(currentGame, db) {
     const leaderboardTitle = document.getElementById('leaderboardTitle');
@@ -66,7 +69,7 @@ function updateLeaderboard(currentGame, db) {
 
             // Create span for rank
             const rankSpan = document.createElement('span');
-            rankSpan.textContent = `${currentRank}.`;
+            rankSpan.textContent = currentRank < 10 ? `${currentRank}. ` : `${currentRank}.`;
             rankSpan.classList.add('rank');
 
             // Create span for name
@@ -76,7 +79,7 @@ function updateLeaderboard(currentGame, db) {
 
             // Create span for score
             const scoreSpan = document.createElement('span');
-            scoreSpan.textContent = `${user.score} points`;
+            scoreSpan.textContent = `${user.score}`;
             scoreSpan.classList.add('score');
 
             // Append spans to li
@@ -84,30 +87,55 @@ function updateLeaderboard(currentGame, db) {
             li.appendChild(nameSpan);
             li.appendChild(scoreSpan);
 
-            // Apply color gradient to top 20
-            if (index < 20) {
-                // Generate color based on position
-                const color = getColorGradient(index);
-                li.style.color = color;
+            // Apply colors based on position (index + 1)
+            const position = index + 1;
+            if (position <= 20) {
+                const color = getColorGradient(position);
+                nameSpan.style.color = color;
+                rankSpan.style.color = color;
+                scoreSpan.style.color = color;
+            } else {
+                // Set colors to the same red as rank 20
+                const color = getColorGradient(20);
+                nameSpan.style.color = color;
+                rankSpan.style.color = color;
+                scoreSpan.style.color = color;
             }
 
             leaderboardList.appendChild(li);
         });
+
+        // After updating the leaderboard, hide the loading screen on first data load
+        if (!initialDataLoaded) {
+            // Hide the loading screen
+            const loadingScreen = document.getElementById('loadingScreen');
+            loadingScreen.style.display = 'none';
+
+            // Show the main content
+            const content = document.getElementById('content');
+            content.style.display = 'block';
+
+            initialDataLoaded = true;
+        }
     });
 }
 
-// Function to generate color gradient
-function getColorGradient(index) {
-    const maxIndex = 19; // 0-based index for top 20
-    const hueStart = 60; // Starting hue (yellow)
-    const hueEnd = 0;    // Ending hue (red)
-    const lightnessStart = 50; // Starting lightness
-    const lightnessEnd = 25;   // Ending lightness
+// Function to generate a gradient from bright yellow to red
+function getColorGradient(position) {
+    const maxPosition = 20; // Positions to apply the gradient
+    const startHue = 60; // Hue for bright yellow
+    const endHue = 0;    // Hue for red
+    const saturation = 100; // Keep saturation constant at 100%
+    const lightness = 50;   // Keep lightness constant at 50%
 
-    const hue = hueStart - ((hueStart - hueEnd) * (index / maxIndex));
-    const lightness = lightnessStart - ((lightnessStart - lightnessEnd) * (index / maxIndex));
+    // Calculate the ratio based on the position
+    const ratio = (position - 1) / (maxPosition - 1);
 
-    return `hsl(${hue}, 100%, ${lightness}%)`;
+    // Interpolate the hue
+    const hue = startHue - (startHue - endHue) * ratio;
+
+    // Return the HSL color string
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
 }
 
 // Listen for real-time changes to the current game and update the leaderboard

@@ -44,8 +44,45 @@
             text-align: center;
         }
 
+        /* Loading Screen Styles */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: black;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999; /* Ensure it covers all other content */
+            font-family: 'Press Start 2P', cursive;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        /* Blinking Animation for Loading Text */
+        @keyframes blink {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        #loadingScreen span {
+            animation: blink 1s infinite;
+        }
+
+        /* Hide the main content initially */
+        #content {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
         /* Header Styles */
         #header {
+            flex-shrink: 0;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -56,23 +93,35 @@
             box-sizing: border-box;
         }
 
-        /* Game Container Styles */
         #gameContainer {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             width: 100%;
-            height: calc(100% - 50px); /* Subtract header height */
+            height: calc(100% - 50px); /* Ensure the container fills the available space */
             border: 4px solid white;
             box-sizing: border-box;
             position: relative;
-            overflow: hidden; /* Hide overflowing content */
+            overflow: hidden;
         }
 
-        /* Game Content Styles */
+        /* Game Title Styles */
+        #gameTitle {
+            flex-shrink: 0; /* Prevents the title from shrinking */
+            margin: 10px 0; /* Optional: Add some margin for spacing */
+        }
+
+        /* Ensure the game content always fills the available space */
         #gameContent {
-            position: absolute; /* Position absolutely within the container */
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            flex: 1; /* Ensures it takes up the remaining space within #gameContainer */
+            display: flex; /* Flexbox to ensure children are properly aligned */
+            justify-content: center; /* Center content horizontally */
+            align-items: center; /* Center content vertically */
+            width: 100%;
+            height: 100%; /* Full height of the container */
+            position: relative;
+            box-sizing: border-box;
+            overflow: hidden; /* Prevents content from spilling outside the container */
         }
 
         /* Canvas Styles */
@@ -146,33 +195,49 @@
                 font-size: 1.2em;
             }
         }
+
+        /* Temporary borders for debugging */
+        /*
+        #gameContent {
+            border: 2px solid blue;
+        }
+
+        #gameContent > div {
+            border: 2px dashed green;
+        }
+        */
     </style>
 </head>
 <body>
-    <!-- Name Input Modal -->
-    <div id="nameModal">
-        <div class="modal-content">
-            <h2>Enter Your Name</h2>
-            <form id="nameForm">
-                <input type="text" id="username" placeholder="YOUR NAME" maxlength="10" required>
-                <button type="submit">START GAME</button>
-            </form>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <span>Loading...</span>
+    </div>
+
+    <!-- Main Content (Initially Hidden) -->
+    <div id="content">
+        <!-- Name Input Modal -->
+        <div id="nameModal">
+            <div class="modal-content">
+                <h2>Enter Your Name</h2>
+                <form id="nameForm">
+                    <input type="text" id="username" placeholder="YOUR NAME" maxlength="12" required>
+                    <button type="submit">START GAME</button>
+                </form>
+            </div>
         </div>
-    </div>
 
+        <!-- Header Section -->
+        <div id="header">
+            <span id="userName"></span>
+            <span id="totalPoints">0</span>
+        </div>
 
-    <!-- Header Section -->
-    <div id="header">
-        <span id="userName"></span>
-        <span id="totalPoints">0</span>
-    </div>
-
-    <!-- Game Container -->
-    <div id="gameContainer">
-        <!-- Game Title -->
-        <h3 id="gameTitle">Select a game to play...</h3>
-        <!-- The game canvas will be injected here by JavaScript -->
-        <div id="gameContent"></div>
+        <!-- Game Container -->
+        <div id="gameContainer">
+            <h3 id="gameTitle">Select a game to play...</h3>
+            <div id="gameContent"></div>
+        </div>
     </div>
 </body>
 </html>

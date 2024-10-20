@@ -1,3 +1,5 @@
+// spaceinvaders.js
+
 // Function to start Space Invaders
 function startSpaceInvaders() {
     // Remove any existing canvas
@@ -10,6 +12,8 @@ function startSpaceInvaders() {
     const canvas = document.createElement('canvas');
     canvas.id = 'gameCanvas';
     canvas.style.display = 'block';
+    canvas.style.width = '100%';
+    canvas.style.height = '100%';
 
     const canvasContainer = document.getElementById('gameContent');
     canvasContainer.appendChild(canvas);
@@ -18,10 +22,10 @@ function startSpaceInvaders() {
     const ctx = canvas.getContext('2d');
     canvas.style.backgroundColor = 'black';
 
-    // Player object (Moved before resizeGame call)
+    // Player object
     const player = {
-        x: canvas.width / 2 - 15,
-        y: canvas.height - 50,
+        x: 0, // Will be set in resizeGame
+        y: 0, // Will be set in resizeGame
         width: 30,
         height: 30,
         speed: 5,
@@ -40,62 +44,6 @@ function startSpaceInvaders() {
     // Control variables
     let isTouching = false;
     let isMouseDown = false;
-
-    // Set canvas dimensions to match its CSS size
-    resizeGame();
-
-    // Create enemies initially (Moved after resizeGame call)
-    createEnemies();
-
-    // Touch controls
-    canvas.addEventListener('touchstart', (e) => {
-        e.preventDefault();
-        isTouching = true;
-        const touch = e.touches[0];
-        updatePlayerPosition(touch.clientX);
-        // Shoot bullet on touchstart
-        shootBullet();
-    }, { passive: false });
-
-    canvas.addEventListener('touchmove', (e) => {
-        e.preventDefault();
-        if (isTouching) {
-            const touch = e.touches[0];
-            updatePlayerPosition(touch.clientX);
-        }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        isTouching = false;
-    }, { passive: false });
-
-    // Mouse controls
-    canvas.addEventListener('mousedown', (e) => {
-        e.preventDefault();
-        isMouseDown = true;
-        updatePlayerPosition(e.clientX);
-        // Shoot bullet on mousedown
-        shootBullet();
-    });
-
-    canvas.addEventListener('mousemove', (e) => {
-        if (isMouseDown) {
-            updatePlayerPosition(e.clientX);
-        }
-    });
-
-    canvas.addEventListener('mouseup', (e) => {
-        isMouseDown = false;
-    });
-
-    // Prevent context menu on right-click
-    canvas.addEventListener('contextmenu', (e) => {
-        e.preventDefault();
-    });
-
-    // Listen for window resize and adjust canvas and game elements
-    window.addEventListener('resize', resizeGame);
 
     // Function to update player position based on input coordinates
     function updatePlayerPosition(clientX) {
@@ -136,15 +84,86 @@ function startSpaceInvaders() {
         });
     }
 
-    // Game loop
-    let animationFrameId;
-    function gameLoop() {
-        update();
-        render();
-        animationFrameId = requestAnimationFrame(gameLoop);
+    // Function to resize game and canvas dimensions
+    function resizeGame() {
+        // Update canvas dimensions to match CSS size
+        canvas.width = canvas.clientWidth;
+        canvas.height = canvas.clientHeight;
+
+        // Update player position
+        player.x = canvas.width / 2 - player.width / 2;
+        player.y = canvas.height - player.height - 20;
+
+        // Recreate enemies
+        createEnemies();
     }
 
-    // Update game objects
+    // Event Handlers
+    function handleTouchStart(e) {
+        e.preventDefault();
+        isTouching = true;
+        const touch = e.touches[0];
+        updatePlayerPosition(touch.clientX);
+        // Shoot bullet on touchstart
+        shootBullet();
+    }
+
+    function handleTouchMove(e) {
+        e.preventDefault();
+        if (isTouching) {
+            const touch = e.touches[0];
+            updatePlayerPosition(touch.clientX);
+        }
+    }
+
+    function handleTouchEnd(e) {
+        e.preventDefault();
+        isTouching = false;
+    }
+
+    function handleMouseDown(e) {
+        e.preventDefault();
+        isMouseDown = true;
+        updatePlayerPosition(e.clientX);
+        // Shoot bullet on mousedown
+        shootBullet();
+    }
+
+    function handleMouseMove(e) {
+        if (isMouseDown) {
+            updatePlayerPosition(e.clientX);
+        }
+    }
+
+    function handleMouseUp(e) {
+        isMouseDown = false;
+    }
+
+    function handleContextMenu(e) {
+        e.preventDefault();
+    }
+
+    // Touch controls
+    canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
+    canvas.addEventListener('touchmove', handleTouchMove, { passive: false });
+    canvas.addEventListener('touchend', handleTouchEnd, { passive: false });
+
+    // Mouse controls
+    canvas.addEventListener('mousedown', handleMouseDown);
+    canvas.addEventListener('mousemove', handleMouseMove);
+    canvas.addEventListener('mouseup', handleMouseUp);
+
+    // Prevent context menu on right-click
+    canvas.addEventListener('contextmenu', handleContextMenu);
+
+    // Listen for window resize and adjust canvas and game elements
+    window.addEventListener('resize', resizeGame);
+
+    // Create enemies initially
+    resizeGame();
+    createEnemies();
+
+    // Function to update game objects
     function update() {
         // Move enemies
         let shiftDown = false;
@@ -188,7 +207,7 @@ function startSpaceInvaders() {
         player.bullets = player.bullets.filter(bullet => bullet.y > -bullet.height);
     }
 
-    // Render game objects
+    // Function to render game objects
     function render() {
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -212,27 +231,42 @@ function startSpaceInvaders() {
         }
     }
 
-    // Function to resize game and canvas dimensions
-    function resizeGame() {
-        // Update canvas dimensions to match CSS size
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-
-        // Update player position
-        player.x = canvas.width / 2 - player.width / 2;
-        player.y = canvas.height - player.height - 20;
-
-        // Recreate enemies
-        createEnemies();
+    // Game loop
+    let animationFrameId;
+    function gameLoop() {
+        update();
+        render();
+        animationFrameId = requestAnimationFrame(gameLoop);
     }
 
     // Start the game loop
     gameLoop();
 
-    // Clean up when the game is stopped or the user navigates away
+    // Function to stop the game
     function stopGame() {
+        // Cancel the animation frame
         cancelAnimationFrame(animationFrameId);
+
+        // Remove event listeners
+        canvas.removeEventListener('touchstart', handleTouchStart);
+        canvas.removeEventListener('touchmove', handleTouchMove);
+        canvas.removeEventListener('touchend', handleTouchEnd);
+        canvas.removeEventListener('mousedown', handleMouseDown);
+        canvas.removeEventListener('mousemove', handleMouseMove);
+        canvas.removeEventListener('mouseup', handleMouseUp);
+        canvas.removeEventListener('contextmenu', handleContextMenu);
+
+        // Remove window resize listener
         window.removeEventListener('resize', resizeGame);
-        // Remove other event listeners if necessary
+
+        // Remove the canvas from the DOM
+        if (canvas.parentNode) {
+            canvas.parentNode.removeChild(canvas);
+        }
+
+        console.log('Space Invaders stopped successfully.');
     }
+
+    // Expose stopGame globally
+    window.stopGame = stopGame;
 }
