@@ -43,7 +43,7 @@ function startSpaceInvaders() {
     const enemyOffsetTop = 30;
     const enemyOffsetLeft = 10;
     let enemyDir = 1;
-    let enemySpeed = 1;  // Start slow
+    let enemySpeed = 0.5;  // Start slow
     let enemyBullets = [];
 
     // Control variables
@@ -93,13 +93,14 @@ function startSpaceInvaders() {
     function enemyShoot(enemy) {
         enemyBullets.push({
             x: enemy.x + enemy.width / 2 - 2.5,
-            y: enemy.y + enemy.height,
+            y: enemy.y + enemy.height,  // Start at the bottom of the enemy
             width: 5,
             height: 10,
             speed: 3,
             isQuestionMark: true
         });
     }
+    
 
     // Function to resize game and canvas dimensions
     function resizeGame() {
@@ -180,35 +181,84 @@ function startSpaceInvaders() {
     resizeGame();
     createEnemies();
 
+    // Function to check if an enemy is on the "top row" (no enemies below it)
+    function isTopRowEnemy(enemyIndex, enemyCols) {
+        const enemyRow = Math.floor(enemyIndex / enemyCols);
+        const enemyCol = enemyIndex % enemyCols;
+
+        // Check if any enemy directly below is alive
+        for (let row = enemyRow + 1; row < enemies.length / enemyCols; row++) {
+            const belowEnemyIndex = row * enemyCols + enemyCol;
+            if (enemies[belowEnemyIndex] && enemies[belowEnemyIndex].alive) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     // Function to update game objects
     function update() {
         if (isGameOver) return;
 
+        // Check if all enemies are cleared
+        if (enemies.every(enemy => !enemy.alive)) {
+            // Increase enemy speed slightly
+            enemySpeed += 0.2;
+
+            // Create a new set of enemies with one additional row
+            const enemyCols = Math.floor((canvas.width - enemyOffsetLeft * 2) / (enemyWidth + enemyPadding));
+            const previousRows = Math.floor(enemies.length / enemyCols);
+            const newRows = previousRows + 1;
+
+            enemies = [];  // Clear the current enemies array
+
+            for (let row = 0; row < newRows; row++) {
+                for (let col = 0; col < enemyCols; col++) {
+                    enemies.push({
+                        x: col * (enemyWidth + enemyPadding) + enemyOffsetLeft,
+                        y: row * (enemyHeight + enemyPadding) + enemyOffsetTop,
+                        width: enemyWidth,
+                        height: enemyHeight,
+                        alive: true
+                    });
+                }
+            }
+        }
+
+
         // Move enemies
         let shiftDown = false;
-        for (let enemy of enemies) {
+        const enemyCols = Math.floor((canvas.width - enemyOffsetLeft * 2) / (enemyWidth + enemyPadding)); // Number of columns
+        for (let i = 0; i < enemies.length; i++) {
+            let enemy = enemies[i];
             if (enemy.alive) {
                 enemy.x += enemyDir * enemySpeed;
                 if (enemy.x + enemy.width >= canvas.width || enemy.x <= 0) {
                     shiftDown = true;
                 }
+
+                // Allow shooting only for top row enemies and reduce firing probability
+                if (Math.random() < 0.0025 && isTopRowEnemy(i, enemyCols)) { // Lower probability (0.25% chance per frame)
+                    enemyShoot(enemy);
+                }
+
+                // Check if any enemy has reached the bottom of the screen or collided with the player
+                if (enemy.y + enemy.height >= canvas.height ||
+                    (enemy.y + enemy.height >= player.y && enemy.x < player.x + player.width && enemy.x + enemy.width > player.x)) {
+                    gameOver();
+                    return;
+                }
             }
         }
+
         if (shiftDown) {
             enemyDir *= -1;
             for (let enemy of enemies) {
                 enemy.y += enemyHeight;
             }
-            // Increase speed as enemies move down
-            enemySpeed += 0.1;
+            // Gradually increase speed as enemies move down
+            enemySpeed += 0.05;
         }
-
-        // Random enemy shooting
-        enemies.forEach(enemy => {
-            if (enemy.alive && Math.random() < 0.01) {  // Adjust probability to fire
-                enemyShoot(enemy);
-            }
-        });
 
         // Move bullets (player and enemy)
         player.bullets.forEach(bullet => bullet.y -= bullet.speed);
@@ -246,7 +296,8 @@ function startSpaceInvaders() {
         // Remove off-screen bullets
         player.bullets = player.bullets.filter(bullet => bullet.y > -bullet.height);
         enemyBullets = enemyBullets.filter(bullet => bullet.y < canvas.height);
-    }
+}
+
 
     // Function to render game objects
     function render() {
@@ -276,9 +327,10 @@ function startSpaceInvaders() {
         // Draw enemy bullets (question marks)
         enemyBullets.forEach(bullet => {
             ctx.fillStyle = 'yellow';
-            ctx.font = '20px Arial';
+            ctx.font = '20px "Press Start 2P"';
             ctx.fillText('?', bullet.x, bullet.y);
         });
+
     }
 
     // Game Over function
@@ -288,7 +340,7 @@ function startSpaceInvaders() {
         // Clear canvas and show "Game Over"
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.fillStyle = 'white';
-        ctx.font = '40px Arial';
+        ctx.font = '40px "Press Start 2P"';
         ctx.textAlign = 'center';
         ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
 
