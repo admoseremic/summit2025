@@ -22,6 +22,9 @@ function startSpaceInvaders() {
     const ctx = canvas.getContext('2d');
     canvas.style.backgroundColor = 'black';
 
+    // New player status
+    let isGameOver = false;
+    
     // Player object
     const player = {
         x: 0, // Will be set in resizeGame
@@ -32,7 +35,7 @@ function startSpaceInvaders() {
         bullets: []
     };
 
-    // Enemy settings
+    // Enemy settings (add a speed multiplier)
     let enemies = [];
     const enemyWidth = 30;
     const enemyHeight = 30;
@@ -40,6 +43,8 @@ function startSpaceInvaders() {
     const enemyOffsetTop = 30;
     const enemyOffsetLeft = 10;
     let enemyDir = 1;
+    let enemySpeed = 1;  // Start slow
+    let enemyBullets = [];
 
     // Control variables
     let isTouching = false;
@@ -81,6 +86,18 @@ function startSpaceInvaders() {
             width: 5,
             height: 10,
             speed: 7
+        });
+    }
+
+    // Function for enemies to shoot question marks
+    function enemyShoot(enemy) {
+        enemyBullets.push({
+            x: enemy.x + enemy.width / 2 - 2.5,
+            y: enemy.y + enemy.height,
+            width: 5,
+            height: 10,
+            speed: 3,
+            isQuestionMark: true
         });
     }
 
@@ -165,11 +182,13 @@ function startSpaceInvaders() {
 
     // Function to update game objects
     function update() {
+        if (isGameOver) return;
+
         // Move enemies
         let shiftDown = false;
         for (let enemy of enemies) {
             if (enemy.alive) {
-                enemy.x += enemyDir * 1;
+                enemy.x += enemyDir * enemySpeed;
                 if (enemy.x + enemy.width >= canvas.width || enemy.x <= 0) {
                     shiftDown = true;
                 }
@@ -180,16 +199,24 @@ function startSpaceInvaders() {
             for (let enemy of enemies) {
                 enemy.y += enemyHeight;
             }
+            // Increase speed as enemies move down
+            enemySpeed += 0.1;
         }
 
-        // Move bullets
-        for (let bullet of player.bullets) {
-            bullet.y -= bullet.speed;
-        }
+        // Random enemy shooting
+        enemies.forEach(enemy => {
+            if (enemy.alive && Math.random() < 0.01) {  // Adjust probability to fire
+                enemyShoot(enemy);
+            }
+        });
 
-        // Collision detection
-        for (let bullet of player.bullets) {
-            for (let enemy of enemies) {
+        // Move bullets (player and enemy)
+        player.bullets.forEach(bullet => bullet.y -= bullet.speed);
+        enemyBullets.forEach(bullet => bullet.y += bullet.speed);
+
+        // Collision detection for player bullets
+        player.bullets.forEach(bullet => {
+            enemies.forEach(enemy => {
                 if (
                     enemy.alive &&
                     bullet.x < enemy.x + enemy.width &&
@@ -198,17 +225,33 @@ function startSpaceInvaders() {
                     bullet.y + bullet.height > enemy.y
                 ) {
                     enemy.alive = false;
-                    bullet.y = -10; // Remove bullet from screen
+                    bullet.y = -10;  // Remove bullet from screen
                 }
+            });
+        });
+
+        // Collision detection for enemy bullets (hitting the player)
+        enemyBullets.forEach(bullet => {
+            if (
+                bullet.x < player.x + player.width &&
+                bullet.x + bullet.width > player.x &&
+                bullet.y < player.y + player.height &&
+                bullet.y + bullet.height > player.y
+            ) {
+                // Player hit, game over
+                gameOver();
             }
-        }
+        });
 
         // Remove off-screen bullets
         player.bullets = player.bullets.filter(bullet => bullet.y > -bullet.height);
+        enemyBullets = enemyBullets.filter(bullet => bullet.y < canvas.height);
     }
 
     // Function to render game objects
     function render() {
+        if (isGameOver) return;
+
         // Clear canvas
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
@@ -217,18 +260,50 @@ function startSpaceInvaders() {
         ctx.fillRect(player.x, player.y, player.width, player.height);
 
         // Draw enemies
-        for (let enemy of enemies) {
+        enemies.forEach(enemy => {
             if (enemy.alive) {
                 ctx.fillStyle = 'green';
                 ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
             }
-        }
+        });
 
-        // Draw bullets
-        for (let bullet of player.bullets) {
+        // Draw player bullets
+        player.bullets.forEach(bullet => {
             ctx.fillStyle = 'red';
             ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
-        }
+        });
+
+        // Draw enemy bullets (question marks)
+        enemyBullets.forEach(bullet => {
+            ctx.fillStyle = 'yellow';
+            ctx.font = '20px Arial';
+            ctx.fillText('?', bullet.x, bullet.y);
+        });
+    }
+
+    // Game Over function
+    function gameOver() {
+        isGameOver = true;
+
+        // Clear canvas and show "Game Over"
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = 'white';
+        ctx.font = '40px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
+
+        // Show Try Again button
+        const tryAgainButton = document.createElement('button');
+        tryAgainButton.innerText = 'Try Again';
+        tryAgainButton.style.position = 'absolute';
+        tryAgainButton.style.left = '50%';
+        tryAgainButton.style.top = '60%';
+        tryAgainButton.style.transform = 'translate(-50%, -50%)';
+        tryAgainButton.onclick = () => {
+            tryAgainButton.remove();
+            startSpaceInvaders();
+        };
+        document.body.appendChild(tryAgainButton);
     }
 
     // Game loop
