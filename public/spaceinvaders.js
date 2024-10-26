@@ -2,10 +2,28 @@
 
 // Function to start Space Invaders
 function startSpaceInvaders() {
+    
     // Remove any existing canvas
     const existingCanvas = document.getElementById('gameCanvas');
     if (existingCanvas) {
         existingCanvas.parentNode.removeChild(existingCanvas);
+    }
+
+    // Remove existing score elements if they exist
+    const existingScoreElement = document.getElementById('scoreElement');
+    if (existingScoreElement) {
+        existingScoreElement.parentNode.removeChild(existingScoreElement);
+    }
+
+    const existingHighScoreElement = document.getElementById('highScoreElement');
+    if (existingHighScoreElement) {
+        existingHighScoreElement.parentNode.removeChild(existingHighScoreElement);
+    }
+
+    // Remove any existing "Try Again" button
+    const existingTryAgainButton = document.getElementById('tryAgainButton');
+    if (existingTryAgainButton) {
+        existingTryAgainButton.parentNode.removeChild(existingTryAgainButton);
     }
 
     // Create and append canvas
@@ -25,6 +43,55 @@ function startSpaceInvaders() {
     // New player status
     let isGameOver = false;
 
+    // Scoring variables
+    let currentScore = 0;
+    let highScore = 0;
+    let username = localStorage.getItem('username');
+
+    // Create a container for score elements
+    const scoreContainer = document.createElement('div');
+    scoreContainer.id = 'scoreContainer';
+    scoreContainer.style.position = 'absolute';
+    scoreContainer.style.top = '10px';
+    scoreContainer.style.left = '0';
+    scoreContainer.style.width = '100%';
+    scoreContainer.style.display = 'flex';
+    scoreContainer.style.justifyContent = 'space-between';
+    scoreContainer.style.padding = '0 10px';
+    canvasContainer.appendChild(scoreContainer);
+
+    // Create score display
+    const scoreElement = document.createElement('div');
+    scoreElement.id = 'scoreElement';
+    scoreElement.style.color = 'white';
+    scoreElement.style.fontFamily = '"Press Start 2P", Arial, sans-serif';
+    scoreElement.style.fontSize = '14px'; // Adjust font size as needed
+    scoreElement.innerText = 'Score: 0';
+    scoreContainer.appendChild(scoreElement);
+
+    // Create high score display
+    const highScoreElement = document.createElement('div');
+    highScoreElement.id = 'highScoreElement';
+    highScoreElement.style.color = 'white';
+    highScoreElement.style.fontFamily = '"Press Start 2P", Arial, sans-serif';
+    highScoreElement.style.fontSize = '14px'; // Adjust font size as needed
+    highScoreElement.innerText = 'High Score: 0'; // Will be updated after retrieval
+    scoreContainer.appendChild(highScoreElement);
+
+    // Retrieve high score from Firebase
+    if (username) {
+        let userRef = window.db.ref('attendees');
+        userRef.orderByChild('name').equalTo(username).once('value', snapshot => {
+            if (snapshot.exists()) {
+                let userData = snapshot.val();
+                let userId = Object.keys(userData)[0];
+                let user = userData[userId];
+                highScore = user.spaceinvaders || 0;
+                highScoreElement.innerText = 'High Score: ' + highScore;
+            }
+        });
+    }
+
     // Player object
     const player = {
         x: 0, // Will be set in resizeGame
@@ -37,9 +104,9 @@ function startSpaceInvaders() {
 
     // Enemy settings
     let enemies = [];
-    const enemyWidth = 30;
-    const enemyHeight = 30;
-    const enemyPadding = 10;
+    const enemyWidth = 50;
+    const enemyHeight = 50;
+    const enemyPadding = 15;
     const enemyOffsetTop = 30;
     const enemyOffsetLeft = 10;
     let enemyCols;
@@ -67,6 +134,37 @@ function startSpaceInvaders() {
     let isTouching = false;
     let isMouseDown = false;
 
+    // Enemy images
+    let enemyImages = [];
+    let imagesLoaded = 0;
+
+    function loadEnemyImages() {
+        const imageSources = [
+            'images/si_pm_1.png',
+            'images/si_pm_2.png',
+            'images/si_marketer_1.png',
+            'images/si_marketer_2.png',
+            'images/si_eng_1.png',
+            'images/si_eng_2.png'
+        ];
+    
+        imageSources.forEach((src, index) => {
+            const img = new Image();
+            img.src = src;
+            img.onload = () => {
+                imagesLoaded++;
+                if (imagesLoaded === imageSources.length) {
+                    // Start the game loop after all images are loaded
+                    gameLoop();
+                }
+            };
+            img.onerror = () => {
+                console.error("Error loading image: " + src);
+            };
+            enemyImages[index] = img;
+        });
+    }
+
     // Function to update player position based on input coordinates
     function updatePlayerPosition(clientX) {
         const rect = canvas.getBoundingClientRect();
@@ -81,25 +179,41 @@ function startSpaceInvaders() {
     function createEnemies() {
         enemies = [];
         enemyCols = Math.floor((canvas.width - enemyOffsetLeft * 2) / (enemyWidth + enemyPadding));
-
+    
         // Set formation initial position
         formation.x = enemyOffsetLeft;
         formation.y = enemyOffsetTop;
-
+    
         // Set movement boundaries
         formation.leftBound = enemyOffsetLeft;
         formation.rightBound = canvas.width - enemyOffsetLeft - (enemyCols * (enemyWidth + enemyPadding)) + enemyPadding;
-
+    
         for (let row = 0; row < enemyRows; row++) {
             for (let col = 0; col < enemyCols; col++) {
+                // Assign images based on the row groupings
+                let imageIndices;
+                if (row >= enemyRows - 2) {
+                    // Bottom two rows use si_pm images
+                    imageIndices = [0, 1];
+                } else if (row >= enemyRows - 4) {
+                    // Next two rows use si_marketer images
+                    imageIndices = [2, 3];
+                } else {
+                    // Other rows use placeholder or default images
+                    imageIndices = [4, 5]; // Ensure these images are loaded
+                }
+    
                 enemies.push({
-                    x: col * (enemyWidth + enemyPadding), // Position relative to formation
+                    x: col * (enemyWidth + enemyPadding),
                     y: row * (enemyHeight + enemyPadding),
                     width: enemyWidth,
                     height: enemyHeight,
                     alive: true,
                     row: row,
-                    col: col
+                    col: col,
+                    animationFrames: imageIndices,
+                    currentAnimationFrameIndex: 0,
+                    frameSwitchCounter: 0
                 });
             }
         }
@@ -248,7 +362,10 @@ function startSpaceInvaders() {
         return true;
     }
 
-    // Function to update game objects
+    
+    formation.speed = 0.2;
+
+    // Function to update game objects   
     function update() {
         if (isGameOver) return;
 
@@ -275,12 +392,23 @@ function startSpaceInvaders() {
         if (formation.x <= formation.leftBound || formation.x >= formation.rightBound) {
             formation.dir *= -1;
             formation.y += enemyHeight;
-            // Increase speed as they move down
-            formation.speed += 0.05;
+
+            // Adjust speed increment
+            formation.speed = Math.min(formation.speed + 0.01, 1); // Max speed cap
         }
 
         // Check for game over condition (enemies reach player)
-        if (formation.y + enemyRows * (enemyHeight + enemyPadding) >= player.y) {
+        let lowestEnemyY = 0;
+        enemies.forEach(enemy => {
+            if (enemy.alive) {
+                let enemyBottomY = formation.y + enemy.y + enemy.height;
+                if (enemyBottomY > lowestEnemyY) {
+                    lowestEnemyY = enemyBottomY;
+                }
+            }
+        });
+
+        if (lowestEnemyY >= player.y) {
             gameOver();
             return;
         }
@@ -289,6 +417,18 @@ function startSpaceInvaders() {
         enemies.forEach(enemy => {
             if (enemy.alive && Math.random() < 0.0025 && isBottomRowEnemy(enemy)) {
                 enemyShoot(enemy);
+            }
+        });
+
+        // Animation frame switching
+        enemies.forEach(enemy => {
+            if (enemy.alive) {
+                enemy.frameSwitchCounter++;
+                if (enemy.frameSwitchCounter >= 30) { // Adjust the threshold as needed
+                    // Toggle between 0 and 1 in currentAnimationFrameIndex
+                    enemy.currentAnimationFrameIndex = (enemy.currentAnimationFrameIndex === 0) ? 1 : 0;
+                    enemy.frameSwitchCounter = 0;
+                }
             }
         });
 
@@ -311,6 +451,16 @@ function startSpaceInvaders() {
                     ) {
                         enemy.alive = false;
                         bullet.y = -10;  // Remove bullet from screen
+                    
+                        // Update the score
+                        currentScore += 10;
+                        scoreElement.innerText = 'Score: ' + currentScore;
+                    
+                        // Check for new high score
+                        if (currentScore > highScore) {
+                            highScore = currentScore;
+                            highScoreElement.innerText = 'High Score: ' + highScore;
+                        }
                     }
                 }
             });
@@ -385,8 +535,19 @@ function startSpaceInvaders() {
             if (enemy.alive) {
                 let enemyX = formation.x + enemy.x;
                 let enemyY = formation.y + enemy.y;
-                ctx.fillStyle = 'green';
-                ctx.fillRect(enemyX, enemyY, enemy.width, enemy.height);
+
+                // Get the current frame index for this enemy
+                let frameIndex = enemy.animationFrames[enemy.currentAnimationFrameIndex];
+
+                // Check if image exists before drawing it
+                if (enemyImages[frameIndex]) {
+                    ctx.drawImage(enemyImages[frameIndex], enemyX, enemyY, enemy.width, enemy.height);
+                } else {
+                    console.error('Image not found for frame:', frameIndex);
+                    // Optional: Draw a placeholder
+                    ctx.fillStyle = 'gray';
+                    ctx.fillRect(enemyX, enemyY, enemy.width, enemy.height);
+                }
             }
         });
 
@@ -413,6 +574,23 @@ function startSpaceInvaders() {
     // Game Over function
     function gameOver() {
         isGameOver = true;
+
+        // Update high score in Firebase if currentScore is greater
+        if (username && currentScore >= highScore) {
+            let userRef = window.db.ref('attendees');
+
+            userRef.orderByChild('name').equalTo(username).once('value', snapshot => {
+                if (snapshot.exists()) {
+                    let userData = snapshot.val();
+                    let userId = Object.keys(userData)[0]; // Get the user's unique ID
+
+                    // Update the high score
+                    let updates = {};
+                    updates['/attendees/' + userId + '/spaceinvaders'] = highScore;
+                    window.db.ref().update(updates);
+                }
+            });
+        }
 
         // Clear canvas and show "Game Over"
         ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -443,8 +621,8 @@ function startSpaceInvaders() {
         animationFrameId = requestAnimationFrame(gameLoop);
     }
 
-    // Start the game loop
-    gameLoop();
+    // Start loading images and game loop
+    loadEnemyImages();
 
     // Function to stop the game
     function stopGame() {
