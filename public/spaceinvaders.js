@@ -3,42 +3,12 @@
 // Function to start Space Invaders
 function startSpaceInvaders() {
     
-    // Remove any existing canvas
-    const existingCanvas = document.getElementById('gameCanvas');
-    if (existingCanvas) {
-        existingCanvas.parentNode.removeChild(existingCanvas);
-    }
-
-    // Remove existing score elements if they exist
-    const existingScoreElement = document.getElementById('scoreElement');
-    if (existingScoreElement) {
-        existingScoreElement.parentNode.removeChild(existingScoreElement);
-    }
-
-    const existingHighScoreElement = document.getElementById('highScoreElement');
-    if (existingHighScoreElement) {
-        existingHighScoreElement.parentNode.removeChild(existingHighScoreElement);
-    }
-
-    // Remove any existing "Try Again" button
-    const existingTryAgainButton = document.getElementById('tryAgainButton');
-    if (existingTryAgainButton) {
-        existingTryAgainButton.parentNode.removeChild(existingTryAgainButton);
-    }
-
-    // Create and append canvas
-    const canvas = document.createElement('canvas');
-    canvas.id = 'gameCanvas';
-    canvas.style.display = 'block';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-
+    resetCanvas();
+    
     const canvasContainer = document.getElementById('gameContent');
-    canvasContainer.appendChild(canvas);
-
-    // Get canvas context
+    const canvas = initializeGameCanvas();
     const ctx = canvas.getContext('2d');
-    canvas.style.backgroundColor = 'black';
+    canvasContainer.appendChild(canvas);
 
     // New player status
     let isGameOver = false;
