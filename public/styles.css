@@ -1,0 +1,205 @@
+/* Global Box-Sizing Reset */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+/* Reset margins and paddings */
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow: hidden;
+    /* Prevent scrolling */
+}
+
+/* General Styles */
+body {
+    background-color: black;
+    color: white;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+    text-align: center;
+}
+
+/* Loading Screen Styles */
+#loadingScreen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    background-color: black;
+    color: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    /* Ensure it covers all other content */
+    font-family: 'Press Start 2P', cursive;
+    font-size: 2em;
+    text-align: center;
+}
+
+/* Blinking Animation for Loading Text */
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.5;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+#loadingScreen span {
+    animation: blink 1s infinite;
+}
+
+/* Hide the main content initially */
+#content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Header Styles */
+#header {
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: black;
+    color: white;
+    padding: 10px;
+    height: 50px;
+    box-sizing: border-box;
+}
+
+#gameContainer {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 50px);
+    /* Ensure the container fills the available space */
+    border: 4px solid white;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Game Title Styles */
+#gameTitle {
+    flex-shrink: 0;
+    /* Prevents the title from shrinking */
+    margin: 10px 0;
+    /* Optional: Add some margin for spacing */
+}
+
+/* Ensure the game content always fills the available space */
+#gameContent {
+    flex: 1;
+    /* Ensures it takes up the remaining space within #gameContainer */
+    display: flex;
+    /* Flexbox to ensure children are properly aligned */
+    justify-content: center;
+    /* Center content horizontally */
+    align-items: center;
+    /* Center content vertically */
+    height: 100%;
+    /* Full height of the container */
+    position: relative;
+    box-sizing: border-box;
+    overflow: hidden;
+    /* Prevents content from spilling outside the container */
+}
+
+/* Canvas Styles */
+#gameCanvas {
+    height: 100%;
+    display: block;
+}
+
+/* Input and Button Styles */
+input[type="text"],
+button {
+    width: 80%;
+    padding: 10px;
+    margin: 10px auto;
+    border: 4px solid white;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+    text-align: center;
+    display: block;
+    background-color: black;
+    color: white;
+}
+
+/* Button Specific Styles */
+button {
+    cursor: pointer;
+}
+
+/* Hover Effect for Button */
+button:hover {
+    background-color: #222;
+}
+
+/* Modal Styles */
+#nameModal {
+    display: none;
+    /* Change to 'flex' to show the modal */
+    position: fixed;
+    z-index: 1;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-content {
+    background-color: #444;
+    padding: 20px;
+    text-align: center;
+    max-width: 300px;
+    width: 100%;
+    margin: 0 auto;
+    border: 4px solid white;
+}
+
+/* Heading Styles */
+h1,
+h2,
+p,
+h3 {
+    margin: 10px 0;
+    font-family: 'Press Start 2P', Arial, sans-serif;
+}
+
+/* Mobile Adjustments */
+@media (max-width: 768px) {
+    .modal-content {
+        max-width: 90%;
+    }
+
+    button,
+    input[type="text"] {
+        font-size: 1.2em;
+    }
+}
+
+/* Temporary borders for debugging */
+/*
+#gameContent {
+    border: 2px solid blue;
+}
+
+#gameContent > div {
+    border: 2px dashed green;
+}
+*/
