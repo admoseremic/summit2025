@@ -105,17 +105,18 @@ function startSpaceInvaders() {
     let isMouseDown = false;
 
     // Enemy images
-    let enemyImages = [];
+    let imageAssets = [];
     let imagesLoaded = 0;
 
-    function loadEnemyImages() {
+    function loadAssets() {
         const imageSources = [
             'images/si_pm_1.png',
             'images/si_pm_2.png',
             'images/si_marketer_1.png',
             'images/si_marketer_2.png',
             'images/si_eng_1.png',
-            'images/si_eng_2.png'
+            'images/si_eng_2.png',
+            'images/ship.png'
         ];
     
         imageSources.forEach((src, index) => {
@@ -131,7 +132,7 @@ function startSpaceInvaders() {
             img.onerror = () => {
                 console.error("Error loading image: " + src);
             };
-            enemyImages[index] = img;
+            imageAssets[index] = img;
         });
     }
 
@@ -497,8 +498,7 @@ function startSpaceInvaders() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         // Draw player
-        ctx.fillStyle = 'white';
-        ctx.fillRect(player.x, player.y, player.width, player.height);
+        ctx.drawImage(imageAssets[6],player.x, player.y, player.width, player.height);
 
         // Draw enemies
         enemies.forEach(enemy => {
@@ -510,8 +510,8 @@ function startSpaceInvaders() {
                 let frameIndex = enemy.animationFrames[enemy.currentAnimationFrameIndex];
 
                 // Check if image exists before drawing it
-                if (enemyImages[frameIndex]) {
-                    ctx.drawImage(enemyImages[frameIndex], enemyX, enemyY, enemy.width, enemy.height);
+                if (imageAssets[frameIndex]) {
+                    ctx.drawImage(imageAssets[frameIndex], enemyX, enemyY, enemy.width, enemy.height);
                 } else {
                     console.error('Image not found for frame:', frameIndex);
                     // Optional: Draw a placeholder
@@ -592,7 +592,7 @@ function startSpaceInvaders() {
     }
 
     // Start loading images and game loop
-    loadEnemyImages();
+    loadAssets();
 
     // Function to stop the game
     function stopGame() {
