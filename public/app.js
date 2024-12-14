@@ -14,7 +14,7 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
         };
         firebase.initializeApp(firebaseConfig);
         window.db = firebase.database();  // Make the database reference globally available
-        
+
         // Enable the rest of the functionality
         initializeAppFunctions();
     })
@@ -43,26 +43,26 @@ function initializeAppFunctions() {
             newAttendeeRef.set({
                 name: username,
                 pacman: 50,         // Example scores
-                donkeykong: 100,
+                runner: 100,
                 spaceinvaders: 75,
                 frogger: 90
             })
-            .then(() => {
-                // Update the user's name display
-                const userNameElement = document.getElementById('userName');
-                if (userNameElement) {
-                    userNameElement.innerText = username;
-                }
-                document.title = `Summit Arcade - ${username}`;
-                // Hide the modal after submission
-                document.getElementById('nameModal').style.display = 'none';
-                // After name is submitted, start listening for real-time updates
-                listenForUserTotalPoints(username);
-            })
-            .catch(error => {
-                // Optionally display error message
-                console.error('Error submitting name:', error);
-            });
+                .then(() => {
+                    // Update the user's name display
+                    const userNameElement = document.getElementById('userName');
+                    if (userNameElement) {
+                        userNameElement.innerText = username;
+                    }
+                    document.title = `Summit Arcade - ${username}`;
+                    // Hide the modal after submission
+                    document.getElementById('nameModal').style.display = 'none';
+                    // After name is submitted, start listening for real-time updates
+                    listenForUserTotalPoints(username);
+                })
+                .catch(error => {
+                    // Optionally display error message
+                    console.error('Error submitting name:', error);
+                });
         }
     }
 
@@ -88,17 +88,19 @@ function initializeAppFunctions() {
     }
 
     // Prevent default touch behaviors
-    document.addEventListener('touchmove', function(event) {
+    document.addEventListener('touchmove', function (event) {
         event.preventDefault();
     }, { passive: false });
 
-    document.addEventListener('gesturestart', function(event) {
+    document.addEventListener('gesturestart', function (event) {
         event.preventDefault();
     });
 
     // Start listening for game changes after all functions are defined
     listenForGameChanges();
 }
+
+const GAME_RATIO = 16 / 9;
 
 // Centralized game canvas creation and resizing logic
 function createGameCanvas() {
@@ -108,24 +110,22 @@ function createGameCanvas() {
     // Create and configure the game canvas or div container
     const canvas = document.createElement('canvas');
     canvas.id = 'gameCanvas';
-    canvas.style.display = 'block';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
-
     gameContent.appendChild(canvas);
+
+    // Create and append canvas
+    const canvasContainer = document.getElementById('gameContent');
+    if(canvasContainer) {
+        canvasContainer.appendChild(canvas);
+    } else {
+        console.log("Unable to attach game canvas to page.");
+    }
+
+    // Get canvas context
+    const ctx = canvas.getContext('2d');
+    canvas.style.backgroundColor = 'black';
 
     // Return the created canvas for game-specific logic to use
     return canvas;
-}
-
-function resizeGameCanvas() {
-    const canvas = document.getElementById('gameCanvas');
-    if (canvas) {
-        const gameContent = document.getElementById('gameContent');
-        // Ensure the canvas takes the full width and height of the gameContent container
-        canvas.width = gameContent.clientWidth;
-        canvas.height = gameContent.clientHeight;
-    }
 }
 
 window.addEventListener('resize', resizeGameCanvas);
@@ -138,11 +138,11 @@ function initializeGameCanvas() {
 
 // Function to stop the current game before switching to a new one
 function stopCurrentGame() {
-  // Check if there's a global stopGame function and call it
-  if (window.stopGame && typeof window.stopGame === 'function') {
-      window.stopGame();
-      window.stopGame = null; // Reset the global reference
-  }
+    // Check if there's a global stopGame function and call it
+    if (window.stopGame && typeof window.stopGame === 'function') {
+        window.stopGame();
+        window.stopGame = null; // Reset the global reference
+    }
 }
 
 // Function to update game based on the current game
@@ -156,9 +156,9 @@ function updateGame(game) {
             gameTitle.innerText = 'Pac-Man';
             startPacman();
             break;
-        case 'donkeykong':
-            gameTitle.innerText = 'Donkey Kong';
-            startDonkeyKong();
+        case 'runner':
+            gameTitle.innerText = 'Runner';
+            startRunner();
             break;
         case 'frogger':
             gameTitle.innerText = 'Frogger';
@@ -170,7 +170,7 @@ function updateGame(game) {
             break;
         default:
             gameTitle.innerText = 'Select a game to play...';
-            gameContent.innerHTML = '<p>Please select a game from the list above.</p>';
+            gameContent.innerHTML = '<p>Please wait</p>';
     }
 
     // Resize canvas after switching to a new game
@@ -192,17 +192,17 @@ function updateGame(game) {
 
 // Modify listenForGameChanges to stop the previous game before starting a new one
 function listenForGameChanges() {
-  const gameRef = window.db.ref('currentGame');
-  gameRef.on('value', (snapshot) => {
-      const currentGame = snapshot.val();
-      console.log('Current game:', currentGame);
+    const gameRef = window.db.ref('currentGame');
+    gameRef.on('value', (snapshot) => {
+        const currentGame = snapshot.val();
+        console.log('Current game:', currentGame);
 
-      // Stop the previous game before starting a new one
-      stopCurrentGame();
+        // Stop the previous game before starting a new one
+        stopCurrentGame();
 
-      // Update the game view
-      updateGame(currentGame);
-  });
+        // Update the game view
+        updateGame(currentGame);
+    });
 }
 
 // Listen for real-time changes to the user's total points
@@ -212,7 +212,7 @@ function listenForUserTotalPoints(username) {
         for (let key in attendees) {
             if (attendees.hasOwnProperty(key) && attendees[key].name === username) {
                 const user = attendees[key];
-                const totalPoints = (user.pacman || 0) + (user.donkeykong || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
+                const totalPoints = (user.pacman || 0) + (user.runner || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
                 const totalPointsElement = document.getElementById('totalPoints');
                 if (totalPointsElement) {
                     totalPointsElement.innerText = totalPoints;
@@ -231,9 +231,7 @@ function createGameCanvas() {
     // Create and configure the game canvas or div container
     const canvas = document.createElement('canvas');
     canvas.id = 'gameCanvas';
-    canvas.style.display = 'block';
-    canvas.style.width = '100%';
-    canvas.style.height = '100%';
+
 
     gameContent.appendChild(canvas);
 
@@ -243,11 +241,21 @@ function createGameCanvas() {
 
 function resizeGameCanvas() {
     const canvas = document.getElementById('gameCanvas');
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    const windowRatio = windowWidth / windowHeight;
     const gameContent = document.getElementById('gameContent');
     if (canvas && gameContent) {
-        // Set canvas width and height based on its parent container
-        canvas.width = gameContent.clientWidth;
-        canvas.height = gameContent.clientHeight;
+        if (windowRatio > GAME_RATIO) {
+            // Window is wide
+            canvas.height = windowHeight;
+            canvas.width = windowHeight * GAME_RATIO;
+        } else {
+            // Window is tall
+            canvas.width = windowWidth;
+            canvas.height = windowWidth / GAME_RATIO;
+        }
+        console.log(canvas.width + " x " + canvas.height);
     }
 }
 
