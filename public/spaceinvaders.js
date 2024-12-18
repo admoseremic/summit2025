@@ -18,35 +18,10 @@ function startSpaceInvaders() {
     let highScore = 0;
     let username = localStorage.getItem('username');
 
-    // Create a container for score elements
-    const scoreContainer = document.createElement('div');
-    scoreContainer.id = 'scoreContainer';
-    scoreContainer.style.position = 'absolute';
-    scoreContainer.style.top = '10px';
-    scoreContainer.style.left = '0';
-    scoreContainer.style.width = '100%';
-    scoreContainer.style.display = 'flex';
-    scoreContainer.style.justifyContent = 'space-between';
-    scoreContainer.style.padding = '0 10px';
-    canvasContainer.appendChild(scoreContainer);
-
-    // Create score display
-    const scoreElement = document.createElement('div');
-    scoreElement.id = 'scoreElement';
-    scoreElement.style.color = 'white';
-    scoreElement.style.fontFamily = '"Press Start 2P", Arial, sans-serif';
-    scoreElement.style.fontSize = '14px'; // Adjust font size as needed
-    scoreElement.innerText = 'Score: 0';
-    scoreContainer.appendChild(scoreElement);
-
-    // Create high score display
-    const highScoreElement = document.createElement('div');
-    highScoreElement.id = 'highScoreElement';
-    highScoreElement.style.color = 'white';
-    highScoreElement.style.fontFamily = '"Press Start 2P", Arial, sans-serif';
-    highScoreElement.style.fontSize = '14px'; // Adjust font size as needed
-    highScoreElement.innerText = 'High Score: 0'; // Will be updated after retrieval
-    scoreContainer.appendChild(highScoreElement);
+    // Create common components
+    canvasContainer.appendChild(newScoreContainer());
+    scoreContainer.appendChild(newScoreElement());
+    scoreContainer.appendChild(newHighScoreElement());
 
     // Retrieve high score from Firebase
     if (username) {
@@ -66,8 +41,8 @@ function startSpaceInvaders() {
     const player = {
         x: 0, // Will be set in resizeGame
         y: 0, // Will be set in resizeGame
-        width: 30,
-        height: 30,
+        width: 50,
+        height: 50,
         speed: 5,
         bullets: []
     };

@@ -262,9 +262,3 @@ function resizeGameCanvas() {
 // Listen for window resize events
 window.addEventListener('resize', resizeGameCanvas);
 
-// Function to handle the creation and resizing of the game canvas
-function initializeGameCanvas() {
-    const canvas = createGameCanvas(); // Create the game canvas
-    resizeGameCanvas(); // Set its initial size
-    return canvas; // Return the canvas element for the game to use
-}
