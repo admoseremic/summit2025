@@ -5,7 +5,7 @@ function startRunner() {
     // Create a canvas dynamically and append it to gameContent
     const canvas = document.createElement('canvas');
     canvas.id = 'gameCanvas';
-    gameContent.appendChild(canvas);
+    canvasContainer.appendChild(canvas);
 
     // Select the most common mobile screen ratio (9:16 for vertical orientation)
     const GAME_RATIO = 9 / 16;

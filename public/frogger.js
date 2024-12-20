@@ -1,19 +1,6 @@
 function startFrogger() {
     resetCanvas();
-
-    const canvasContainer = document.getElementById('gameContent');
-    const canvas = initializeGameCanvas();
-    const ctx = canvas.getContext('2d');
-    canvasContainer.appendChild(canvas);
-
-    // New player status
-    let isGameOver = false;
-
-    // Scoring variables
-    const gridSize = 50;
-    let currentScore = 0;
-    let highScore = 0;
-    let username = localStorage.getItem('username');
+    isGameOver = false;
 
     // Create common components
     canvasContainer.appendChild(newScoreContainer());
@@ -35,12 +22,12 @@ function startFrogger() {
     }
 
     // Game Variables
-    const rows = Math.ceil(canvas.height / gridSize);
-    const columns = Math.ceil(canvas.width / gridSize);
-    let player = { x: Math.floor(columns / 2), y: rows - 2, onLog: null, drifting: 0 };
-    let cameraY = rows * gridSize - canvas.height * 0.25;
-    // Starts at 0.5 grid squares/sec
-    let cameraSpeed = 0.5;
+    const rows = Math.ceil(canvas.height / scale);
+    const columns = Math.ceil(canvas.width / scale);
+    let player = { x: 4, y: 10, onLog: null, drifting: 0 };
+    console.log("Player: "+ player.x + " x " + player.y);
+    let cameraY = rows * scale - canvas.height * 0.25;
+    let cameraSpeed = 0.5; // Starts at 0.5 grid squares/sec
     let elapsedTime = 0;
     let imagesLoaded = 0;
     const imageAssets = [];
@@ -63,6 +50,7 @@ function startFrogger() {
             imageAssets[index] = img;
         });
     }
+
 
     // Input Handling
     let touchStartX = 0, touchStartY = 0;
@@ -89,16 +77,7 @@ function startFrogger() {
         if (e.key === 'ArrowRight') movePlayer('right');
     });
 
-    canvas.addEventListener('mousedown', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const clickX = e.clientX - rect.left;
-        const clickY = e.clientY - rect.top;
-        const playerScreenY = player.y * gridSize - cameraY;
-
-        if (clickY < playerScreenY) movePlayer('up');
-        else if (clickX < player.x * gridSize) movePlayer('left');
-        else if (clickX > (player.x + 1) * gridSize) movePlayer('right');
-    });
+    window.addEventListener('click', () => movePlayer('up'));
 
     function movePlayer(direction) {
         if (direction === 'up') player.y--;
@@ -108,36 +87,44 @@ function startFrogger() {
     }
 
     // Game Prefabs
-    function createRow(type, frequency) {
-        const direction = Math.random() > 0.5 ? 1 : -1;
+    function createRow(type, frequency, direction, speed) {
         const entities = [];
         const spacing = columns / frequency;
 
         for (let i = 0; i < frequency; i++) {
-            entities.push({ x: i * spacing - (direction > 0 ? columns : 0), speed: 0.5 + Math.random() * 0.3, direction });
+            entities.push({ x: i * spacing - (direction > 0 ? columns : 0), speed, direction });
         }
 
-        rowsData.push({ type, entities, direction });
+        rowsData.unshift({ type, entities, direction });
     }
 
     function generateRows() {
         let roadWaterCount = 1;
         let nextType = 'road';
+        let groupSize = 1;
+        let lastDirection = 1; // Start with rightward movement
 
         while (rowsData.length < rows + 10) {
-            rowsData.push({ type: 'rest', entities: [] });
+            rowsData.unshift({ type: 'rest', entities: [] });
 
-            for (let i = 0; i < roadWaterCount; i++) {
-                createRow(nextType, 3);
+            for (let i = 0; i < groupSize; i++) {
+                const frequency = nextType === 'road' ? 3 + Math.floor(elapsedTime / 20) : 3 - Math.floor(elapsedTime / 20);
+                const speed = 0.5 + (Math.random() * 0.1 - 0.05);
+                createRow(nextType, Math.max(1, frequency), lastDirection, speed);
+                lastDirection *= -1; // Alternate direction
             }
 
             nextType = nextType === 'road' ? 'water' : 'road';
-            roadWaterCount++;
+            if (nextType === 'road') groupSize++;
         }
     }
 
+
+
     // Game Loop
     function gameLoop(timestamp) {
+
+        if (isGameOver) return;
         const deltaTime = (timestamp - lastUpdate) / 1000;
         lastUpdate = timestamp;
         elapsedTime += deltaTime;
@@ -145,7 +132,7 @@ function startFrogger() {
         // Increase camera speed over time
         cameraSpeed = 0.5 + Math.min(0.5, elapsedTime / 30);
 
-        cameraY -= cameraSpeed * gridSize * deltaTime;
+        cameraY -= cameraSpeed * scale * deltaTime;
 
         // Update Entities
         player.onLog = null;
@@ -156,7 +143,7 @@ function startFrogger() {
                     if (entity.x > columns) entity.x = -1;
                     if (entity.x < -1) entity.x = columns;
 
-                    if (row.type === 'road' && Math.abs(entity.x - player.x) < 0.5 && player.y === index) resetGame();
+                    if (row.type === 'road' && Math.abs(entity.x - player.x) < 0.5 && player.y === index) gameOver();
                     if (row.type === 'water' && Math.abs(entity.x - player.x) < 0.5 && player.y === index) player.onLog = entity;
                 });
             }
@@ -165,15 +152,16 @@ function startFrogger() {
         if (player.onLog) {
             player.drifting += player.onLog.speed * player.onLog.direction * deltaTime;
             player.x += player.drifting;
-            if (player.x < 0 || player.x >= columns) resetGame();
+            if (player.x < 0 || player.x >= columns) gameOver();
         }
 
         // Camera Boundary Check
-        if (player.y * gridSize < cameraY || player.y * gridSize > cameraY + canvas.height) resetGame();
+        if (player.y * scale < cameraY || player.y * scale > cameraY + canvas.height) gameOver();
 
         // Draw
         drawGame();
-        requestAnimationFrame(gameLoop);
+        generateRows(); // Ensure rows are continuously generated
+        animationFrameId = requestAnimationFrame(gameLoop);
     }
 
     function drawGame() {
@@ -182,43 +170,34 @@ function startFrogger() {
         rowsData.forEach((row, index) => {
             if (row.type === 'road') {
                 for (let x = 0; x < columns; x++) {
-                    ctx.drawImage(imageAssets[4], x * gridSize, index * gridSize - cameraY, gridSize, gridSize);
+                    ctx.drawImage(imageAssets[4], x * scale, index * scale - cameraY, scale, scale);
                 }
                 row.entities.forEach(car => {
-                    ctx.drawImage(imageAssets[1], car.x * gridSize, index * gridSize - cameraY, gridSize, gridSize);
+                    ctx.drawImage(imageAssets[1], car.x * scale, index * scale - cameraY, scale, scale);
                 });
             } else if (row.type === 'water') {
                 for (let x = 0; x < columns; x++) {
-                    ctx.drawImage(imageAssets[3], x * gridSize, index * gridSize - cameraY, gridSize, gridSize);
+                    ctx.drawImage(imageAssets[3], x * scale, index * scale - cameraY, scale, scale);
                 }
                 row.entities.forEach(log => {
-                    ctx.drawImage(imageAssets[2], log.x * gridSize, index * gridSize - cameraY, gridSize, gridSize);
+                    ctx.drawImage(imageAssets[2], log.x * scale, index * scale - cameraY, scale, scale);
                 });
             } else {
                 for (let x = 0; x < columns; x++) {
                     ctx.fillStyle = "#444";
-                    ctx.fillRect(x * gridSize, index * gridSize - cameraY, gridSize, gridSize);
+                    ctx.fillRect(x * scale, index * scale - cameraY, scale, scale);
                 }
             }
         });
 
         // Draw Player
-        ctx.drawImage(imageAssets[0], player.x * gridSize, player.y * gridSize - cameraY, gridSize, gridSize);
-    }
-
-    function resetGame() {
-        alert('Game Over!');
-        player = { x: Math.floor(columns / 2), y: rows - 2, onLog: null, drifting: 0 };
-        rowsData.length = 0;
-        generateRows();
-        cameraY = rows * gridSize - canvas.height * 0.25;
-        elapsedTime = 0;
+        ctx.drawImage(imageAssets[0], player.x * scale, player.y * scale - cameraY, scale, scale);
     }
 
     // Start the game
     loadAssets(() => {
         generateRows();
         lastUpdate = performance.now();
-        requestAnimationFrame(gameLoop);
+        animationFrameId = requestAnimationFrame(gameLoop);
     });
 }

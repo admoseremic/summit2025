@@ -22,8 +22,26 @@ fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
         console.error('Error fetching the API key:', error);
     });
 
-// Flag to check if initial data has been loaded
 let initialDataLoaded = false;
+let game = '';
+let currentScore = 0;
+let highScore = 0;
+let username = localStorage.getItem('username');
+let isGameOver = false;
+
+const GAME_RATIO = 9 / 16;
+const canvasContainer = document.getElementById('gameContent');
+let canvas = createGameCanvas();
+let ctx = canvas.getContext('2d');
+let gameLoop = null;
+canvasContainer.appendChild(canvas);
+let animationFrameId;
+let scale = 1;
+
+
+// Listen for window resize and adjust canvas and game elements
+resizeGameCanvas();
+window.addEventListener('resize', resizeGameCanvas);
 
 // Initialize Firebase-dependent functions after Firebase has been initialized
 function initializeAppFunctions() {
@@ -42,7 +60,7 @@ function initializeAppFunctions() {
             // Write the user's name and example scores to the Realtime Database
             newAttendeeRef.set({
                 name: username,
-                pacman: 50,         // Example scores
+                breakout: 50,         // Example scores
                 runner: 100,
                 spaceinvaders: 75,
                 frogger: 90
@@ -100,61 +118,34 @@ function initializeAppFunctions() {
     listenForGameChanges();
 }
 
-const GAME_RATIO = 16 / 9;
+
 
 // Centralized game canvas creation and resizing logic
 function createGameCanvas() {
-    const gameContent = document.getElementById('gameContent');
-    gameContent.innerHTML = ''; // Clear previous game content
+    canvasContainer.innerHTML = '';
 
     // Create and configure the game canvas or div container
-    const canvas = document.createElement('canvas');
-    canvas.id = 'gameCanvas';
-    gameContent.appendChild(canvas);
-
-    // Create and append canvas
-    const canvasContainer = document.getElementById('gameContent');
-    if(canvasContainer) {
-        canvasContainer.appendChild(canvas);
-    } else {
-        console.log("Unable to attach game canvas to page.");
-    }
-
-    // Get canvas context
-    const ctx = canvas.getContext('2d');
-    canvas.style.backgroundColor = 'black';
-
+    const _canvas = document.createElement('canvas');
+    _canvas.id = 'gameCanvas';
+    _canvas.style.backgroundColor = 'black';
+    
     // Return the created canvas for game-specific logic to use
-    return canvas;
-}
-
-window.addEventListener('resize', resizeGameCanvas);
-
-function initializeGameCanvas() {
-    const canvas = createGameCanvas(); // Create the game canvas
-    resizeGameCanvas(); // Set its initial size
-    return canvas; // Return the canvas element for the game to use
-}
-
-// Function to stop the current game before switching to a new one
-function stopCurrentGame() {
-    // Check if there's a global stopGame function and call it
-    if (window.stopGame && typeof window.stopGame === 'function') {
-        window.stopGame();
-        window.stopGame = null; // Reset the global reference
-    }
+    _canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    _canvas.addEventListener('dblclick', (e) => e.preventDefault());
+    canvasContainer.appendChild(_canvas);
+    return _canvas;
 }
 
 // Function to update game based on the current game
-function updateGame(game) {
+function updateGame(switchToGame) {
     const gameTitle = document.getElementById('gameTitle');
-    const gameContent = document.getElementById('gameContent');
-    gameContent.innerHTML = ''; // Clear previous game content
-
+    
+    canvasContainer.innerHTML = ''; // Clear previous game content
+    game = switchToGame;
     switch (game) {
-        case 'pacman':
-            gameTitle.innerText = 'Pac-Man';
-            startPacman();
+        case 'breakout':
+            gameTitle.innerText = 'Breakout';
+            startBreakout();
             break;
         case 'runner':
             gameTitle.innerText = 'Runner';
@@ -169,8 +160,8 @@ function updateGame(game) {
             startSpaceInvaders();
             break;
         default:
-            gameTitle.innerText = 'Select a game to play...';
-            gameContent.innerHTML = '<p>Please wait</p>';
+            gameTitle.innerText = 'Please wait...';
+            canvasContainer.innerHTML = '<p>Waiting for a game to be selected...</p>';
     }
 
     // Resize canvas after switching to a new game
@@ -198,7 +189,7 @@ function listenForGameChanges() {
         console.log('Current game:', currentGame);
 
         // Stop the previous game before starting a new one
-        stopCurrentGame();
+        stopGame();
 
         // Update the game view
         updateGame(currentGame);
@@ -212,7 +203,7 @@ function listenForUserTotalPoints(username) {
         for (let key in attendees) {
             if (attendees.hasOwnProperty(key) && attendees[key].name === username) {
                 const user = attendees[key];
-                const totalPoints = (user.pacman || 0) + (user.runner || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
+                const totalPoints = (user.breakout || 0) + (user.runner || 0) + (user.spaceinvaders || 0) + (user.frogger || 0);
                 const totalPointsElement = document.getElementById('totalPoints');
                 if (totalPointsElement) {
                     totalPointsElement.innerText = totalPoints;
@@ -223,22 +214,6 @@ function listenForUserTotalPoints(username) {
     });
 }
 
-// Function to create a consistent game container/canvas
-function createGameCanvas() {
-    const gameContent = document.getElementById('gameContent');
-    gameContent.innerHTML = ''; // Clear previous game content
-
-    // Create and configure the game canvas or div container
-    const canvas = document.createElement('canvas');
-    canvas.id = 'gameCanvas';
-
-
-    gameContent.appendChild(canvas);
-
-    // Return the created canvas for game-specific logic to use
-    return canvas;
-}
-
 function resizeGameCanvas() {
     const canvas = document.getElementById('gameCanvas');
     const windowWidth = window.innerWidth;
@@ -246,19 +221,29 @@ function resizeGameCanvas() {
     const windowRatio = windowWidth / windowHeight;
     const gameContent = document.getElementById('gameContent');
     if (canvas && gameContent) {
+        // Ensure the game ratio is maintained
+        let newWidth, newHeight;
+
         if (windowRatio > GAME_RATIO) {
-            // Window is wide
-            canvas.height = windowHeight;
-            canvas.width = windowHeight * GAME_RATIO;
+            // Window is wider than game ratio
+            newHeight = windowHeight;
+            newWidth = newHeight * GAME_RATIO;
         } else {
-            // Window is tall
-            canvas.width = windowWidth;
-            canvas.height = windowWidth / GAME_RATIO;
+            // Window is taller than game ratio
+            newWidth = windowWidth;
+            newHeight = newWidth / GAME_RATIO;
         }
+
+        // Set canvas size
+        canvas.width = newWidth;
+        canvas.height = newHeight;
+
+        // Optionally, you can adjust the scaling factor here for consistent in-game scaling
+        scale = canvas.width / 8;
+        // Apply scaling (example for sprite scaling)
+        // sprite.style.transform = `scale(${scaleX}, ${scaleY})`; // You would need to update your sprite scaling logic
+
         console.log(canvas.width + " x " + canvas.height);
     }
+
 }
-
-// Listen for window resize events
-window.addEventListener('resize', resizeGameCanvas);
-

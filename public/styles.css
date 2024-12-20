@@ -80,11 +80,9 @@ body {
 }
 
 #gameContainer {
-    flex: 1;
-    display: flex;
+    
     flex-direction: column;
     height: calc(100% - 50px);
-    /* Ensure the container fills the available space */
     border: 4px solid white;
     box-sizing: border-box;
     position: relative;
@@ -99,28 +97,10 @@ body {
     /* Optional: Add some margin for spacing */
 }
 
-/* Ensure the game content always fills the available space */
-#gameContent {
-    flex: 1;
-    /* Ensures it takes up the remaining space within #gameContainer */
-    display: flex;
-    /* Flexbox to ensure children are properly aligned */
-    justify-content: center;
-    /* Center content horizontally */
-    align-items: center;
-    /* Center content vertically */
-    height: 100%;
-    /* Full height of the container */
-    position: relative;
-    box-sizing: border-box;
-    overflow: hidden;
-    /* Prevents content from spilling outside the container */
-}
-
 /* Canvas Styles */
 #gameCanvas {
     height: 100%;
-    display: block;
+    border: 1px solid red;
 }
 
 /* Input and Button Styles */
@@ -192,14 +172,3 @@ h3 {
         font-size: 1.2em;
     }
 }
-
-/* Temporary borders for debugging */
-/*
-#gameContent {
-    border: 2px solid blue;
-}
-
-#gameContent > div {
-    border: 2px dashed green;
-}
-*/

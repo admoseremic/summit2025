@@ -1,22 +1,6 @@
-// spaceinvaders.js
-
-// Function to start Space Invaders
 function startSpaceInvaders() {
-    
     resetCanvas();
-    
-    const canvasContainer = document.getElementById('gameContent');
-    const canvas = initializeGameCanvas();
-    const ctx = canvas.getContext('2d');
-    canvasContainer.appendChild(canvas);
-
-    // New player status
-    let isGameOver = false;
-
-    // Scoring variables
-    let currentScore = 0;
-    let highScore = 0;
-    let username = localStorage.getItem('username');
+    isGameOver = false;
 
     // Create common components
     canvasContainer.appendChild(newScoreContainer());
@@ -114,8 +98,7 @@ function startSpaceInvaders() {
     // Function to update player position based on input coordinates
     function updatePlayerPosition(clientX) {
         const rect = canvas.getBoundingClientRect();
-        const scaleX = canvas.width / rect.width;
-        player.x = (clientX - rect.left) * scaleX - player.width / 2;
+        player.x = (clientX - rect.left) * scale - player.width / 2;
         // Keep player within bounds
         if (player.x < 0) player.x = 0;
         if (player.x + player.width > canvas.width) player.x = canvas.width - player.width;
@@ -209,9 +192,6 @@ function startSpaceInvaders() {
 
     // Function to resize game and canvas dimensions
     function resizeGame() {
-        // Update canvas dimensions to match CSS size
-        canvas.width = canvas.clientWidth;
-        canvas.height = canvas.clientHeight;
 
         // Update player position
         player.x = canvas.width / 2 - player.width / 2;
@@ -268,9 +248,7 @@ function startSpaceInvaders() {
         isMouseDown = false;
     }
 
-    function handleContextMenu(e) {
-        e.preventDefault();
-    }
+
 
     // Touch controls
     canvas.addEventListener('touchstart', handleTouchStart, { passive: false });
@@ -282,11 +260,7 @@ function startSpaceInvaders() {
     canvas.addEventListener('mousemove', handleMouseMove);
     canvas.addEventListener('mouseup', handleMouseUp);
 
-    // Prevent context menu on right-click
-    canvas.addEventListener('contextmenu', handleContextMenu);
 
-    // Listen for window resize and adjust canvas and game elements
-    window.addEventListener('resize', resizeGame);
 
     // Create enemies and shields initially
     resizeGame();
@@ -355,7 +329,7 @@ function startSpaceInvaders() {
         });
 
         if (lowestEnemyY >= player.y) {
-            gameOver();
+            //gameOver();
             return;
         }
 
@@ -456,7 +430,7 @@ function startSpaceInvaders() {
                 bullet.y + bullet.height > player.y
             ) {
                 // Player hit, game over
-                gameOver();
+                //gameOver();
             }
         });
 
@@ -516,50 +490,10 @@ function startSpaceInvaders() {
         });
     }
 
-    // Game Over function
-    function gameOver() {
-        isGameOver = true;
 
-        // Update high score in Firebase if currentScore is greater
-        if (username && currentScore >= highScore) {
-            let userRef = window.db.ref('attendees');
-
-            userRef.orderByChild('name').equalTo(username).once('value', snapshot => {
-                if (snapshot.exists()) {
-                    let userData = snapshot.val();
-                    let userId = Object.keys(userData)[0]; // Get the user's unique ID
-
-                    // Update the high score
-                    let updates = {};
-                    updates['/attendees/' + userId + '/spaceinvaders'] = highScore;
-                    window.db.ref().update(updates);
-                }
-            });
-        }
-
-        // Clear canvas and show "Game Over"
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = 'white';
-        ctx.font = '40px "Press Start 2P"';
-        ctx.textAlign = 'center';
-        ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
-
-        // Show Try Again button
-        const tryAgainButton = document.createElement('button');
-        tryAgainButton.innerText = 'Try Again';
-        tryAgainButton.style.position = 'absolute';
-        tryAgainButton.style.left = '50%';
-        tryAgainButton.style.top = '60%';
-        tryAgainButton.style.transform = 'translate(-50%, -50%)';
-        tryAgainButton.onclick = () => {
-            tryAgainButton.remove();
-            startSpaceInvaders();
-        };
-        document.body.appendChild(tryAgainButton);
-    }
 
     // Game loop
-    let animationFrameId;
+    
     function gameLoop() {
         update();
         render();
@@ -569,31 +503,5 @@ function startSpaceInvaders() {
     // Start loading images and game loop
     loadAssets();
 
-    // Function to stop the game
-    function stopGame() {
-        // Cancel the animation frame
-        cancelAnimationFrame(animationFrameId);
 
-        // Remove event listeners
-        canvas.removeEventListener('touchstart', handleTouchStart);
-        canvas.removeEventListener('touchmove', handleTouchMove);
-        canvas.removeEventListener('touchend', handleTouchEnd);
-        canvas.removeEventListener('mousedown', handleMouseDown);
-        canvas.removeEventListener('mousemove', handleMouseMove);
-        canvas.removeEventListener('mouseup', handleMouseUp);
-        canvas.removeEventListener('contextmenu', handleContextMenu);
-
-        // Remove window resize listener
-        window.removeEventListener('resize', resizeGame);
-
-        // Remove the canvas from the DOM
-        if (canvas.parentNode) {
-            canvas.parentNode.removeChild(canvas);
-        }
-
-        console.log('Space Invaders stopped successfully.');
-    }
-
-    // Expose stopGame globally
-    window.stopGame = stopGame;
 }
