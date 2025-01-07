@@ -15,9 +15,11 @@
     <style>
         /* Global Styles */
         body {
+            transform: scale(0.6);
+            transform-origin: top left;
             transition: background-color 0.5s ease;
             font-family: 'Press Start 2P', cursive;
-            font-size: 12px;
+            font-size: 14px;
             text-align: center;
             background-color: black;
             color: white;
@@ -137,10 +139,9 @@
 
     <!-- Main Content -->
     <div id="content">
-        <h1>Game Leaderboard</h1>
+        <h1 id="leaderboardTitle">Leaderboard</h1>
         <!-- Leaderboard for the current game -->
         <div id="leaderboard">
-            <h2 id="leaderboardTitle">Leaderboard</h2>
             <ul id="leaderboardList">
                 <!-- Leaderboard entries will be dynamically inserted here -->
             </ul>
