@@ -1,119 +1,230 @@
 /***********************************************************
  * testgame.js
+ * - Shows a title screen on first load
+ * - On game over, calls the common gameOver(...),
+ *   passing a "restartCallback" to skip the title
  ***********************************************************/
 
-// We'll track a few game-specific variables
-let playerPos = { x: 4, y: 8 }; // Middle-ish of 9×16
-let enemyPos = { x: 4, y: 2 };
-let fastSpeed = false;     // Mechanic from Firebase
-let invincible = false;    // Mechanic from Firebase
+// Game-specific variables
+let playerPos  = { x: 4,  y: 8 };
+let targetPos  = { x: 4,  y: 8 };
+let enemyPos   = { x: 4,  y: 2 };
+let fastSpeed  = false;
+let invincible = false;
 
-// startTestGame is called from arcadeCore.js's loadGame('testgame')
+let baseLerpSpeed = 3;  // cells/sec
+let previousTimestamp = 0;
+
+/*************************************************************
+ * Called by arcadeCore.js -> loadGame('testgame')
+ *************************************************************/
 function startTestGame() {
-  // Show the title screen only once, then skip it on "Try Again"
+  // Show a title screen only once, then call initTestGame
   showTitleScreen('Test Game Title', () => {
-    // Once start is pressed
     hideTitleScreen();
     initTestGame();
   });
 }
 
+/*************************************************************
+ * Initialize game (no title screen)
+ *************************************************************/
 function initTestGame() {
-  // Start listening to mechanic toggles in firebase
+  isGameOver = false;
+  currentScore = 0;
+
+  // Reset positions
+  playerPos = { x: 4, y: 8 };
+  targetPos = { x: 4, y: 8 };
+  enemyPos  = { x: 4, y: 2 };
+
+  previousTimestamp = performance.now();
+
+  // Listen to mechanics toggles
   listenToMechanics();
 
-  // Reset in-game variables
-  currentScore = 0;
-  playerPos = { x: 4, y: 8 };
-  enemyPos = { x: 4, y: 2 };
+  // Attach input listeners
+  canvas.addEventListener('click', handleCanvasClick);
+  canvas.addEventListener('touchstart', handleCanvasTouchStart, { passive: false });
 
-  // Start the animation loop
-  isGameOver = false;
-  animationFrameId = requestAnimationFrame(gameLoop);
+  // Start loop
+  animationFrameId = requestAnimationFrame(gameLoopTestGame);
 }
 
-// Listen for toggles stored in "mechanics/testgame"
-function listenToMechanics() {
-  const mechanicsRef = db.ref('mechanics/testgame');
-  mechanicsRef.off(); // remove old listeners if any
+/*************************************************************
+ * Title Screen Helpers
+ * (You can keep these in testgame.js or unify them in arcadeCore)
+ *************************************************************/
+function showTitleScreen(title, onStart) {
+  // create an overlay
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999
+  });
+  overlay.id = 'titleOverlay';
 
-  mechanicsRef.on('value', snapshot => {
-    const val = snapshot.val() || {};
-    fastSpeed = !!val.fastSpeed;        // convert to boolean
+  const h1 = document.createElement('h1');
+  h1.innerText = title;
+  h1.style.color = 'white';
+
+  const startBtn = document.createElement('button');
+  startBtn.innerText = 'Start';
+  Object.assign(startBtn.style, {
+    fontFamily: '"Press Start 2P", sans-serif',
+    fontSize: '16px',
+    padding: '10px 20px',
+    border: '4px solid white',
+    cursor: 'pointer',
+    backgroundColor: '#000',
+    color: '#fff',
+    marginTop: '20px'
+  });
+  startBtn.onclick = () => {
+    document.body.removeChild(overlay);
+    if (onStart) onStart();
+  };
+
+  overlay.appendChild(h1);
+  overlay.appendChild(startBtn);
+  document.body.appendChild(overlay);
+}
+
+function hideTitleScreen() {
+  const overlay = document.getElementById('titleOverlay');
+  if (overlay) {
+    document.body.removeChild(overlay);
+  }
+}
+
+/*************************************************************
+ * Mechanics toggles (fastSpeed, invincible)
+ *************************************************************/
+function listenToMechanics() {
+  const ref = db.ref('mechanics/testgame');
+  ref.off();
+  ref.on('value', snap => {
+    const val = snap.val() || {};
+    fastSpeed = !!val.fastSpeed;
     invincible = !!val.invincible;
-    console.log("Mechanics updated:", fastSpeed, invincible);
   });
 }
 
-function gameLoop(timestamp) {
+/*************************************************************
+ * GAME LOOP
+ *************************************************************/
+function gameLoopTestGame(timestamp) {
   if (isGameOver) return;
-  update();
-  render();
-  animationFrameId = requestAnimationFrame(gameLoop);
+
+  const deltaTime = (timestamp - previousTimestamp) / 1000;
+  previousTimestamp = timestamp;
+
+  updateTestGame(deltaTime);
+  renderTestGame();
+
+  animationFrameId = requestAnimationFrame(gameLoopTestGame);
 }
 
-function update() {
-  // Optionally, you can move the enemy or do something to cause collisions
-  // We'll do a simple "if the player is on the same square as enemy" => gameOver
-  if (!invincible && playerPos.x === enemyPos.x && playerPos.y === enemyPos.y) {
-    // Player collided with enemy
-    gameOver();
-    return;
+/*************************************************************
+ * UPDATE
+ *************************************************************/
+function updateTestGame(deltaTime) {
+  // Lerp
+  const lerpSpeed = fastSpeed ? baseLerpSpeed * 2 : baseLerpSpeed;
+  let dx = targetPos.x - playerPos.x;
+  let dy = targetPos.y - playerPos.y;
+  let dist = Math.sqrt(dx*dx + dy*dy);
+
+  if (dist > 0.001) {
+    const step = lerpSpeed * deltaTime;
+    if (step >= dist) {
+      playerPos.x = targetPos.x;
+      playerPos.y = targetPos.y;
+    } else {
+      playerPos.x += (dx / dist) * step;
+      playerPos.y += (dy / dist) * step;
+    }
   }
 
-  // Increase score over time for demonstration
-  currentScore += 1;
-  if (scoreElement) scoreElement.innerText = 'Score: ' + currentScore;
+  // Collision check
+  if (!invincible) {
+    let ex = enemyPos.x - playerPos.x;
+    let ey = enemyPos.y - playerPos.y;
+    let enemyDist = Math.sqrt(ex*ex + ey*ey);
+    if (enemyDist < 0.5) {
+      // Game Over
+      gameOver(() => initTestGame());  // <--- PASS RESTART CALLBACK
+      return;
+    }
+  }
 
-  // If the player toggled "fast speed," you could move an enemy or something faster
-  // But for simplicity, let's leave it at that.
+  // Increase score
+  currentScore++;
+  if (scoreElement) {
+    scoreElement.innerText = 'Score: ' + currentScore;
+  }
 }
 
-function render() {
+/*************************************************************
+ * RENDER
+ *************************************************************/
+function renderTestGame() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  // Each cell in 9×16: figure out the cell size
-  const cellW = canvas.width / baseCols;
+  const cellW = canvas.width  / baseCols;
   const cellH = canvas.height / baseRows;
 
-  // Draw checkerboard
+  // Checkerboard
   for (let r = 0; r < baseRows; r++) {
     for (let c = 0; c < baseCols; c++) {
-      // Alternate color
       ctx.fillStyle = ((r + c) % 2 === 0) ? '#444' : '#666';
       ctx.fillRect(c * cellW, r * cellH, cellW, cellH);
     }
   }
 
-  // Draw enemy (car sprite from frogger, or a red square for example)
+  // Enemy
   ctx.fillStyle = 'red';
   ctx.fillRect(enemyPos.x * cellW, enemyPos.y * cellH, cellW, cellH);
 
-  // Draw player sprite (just a green square for test)
+  // Player
   ctx.fillStyle = 'green';
   ctx.fillRect(playerPos.x * cellW, playerPos.y * cellH, cellW, cellH);
 }
 
-// Input: snap the player to nearest grid cell
-// We attach listeners on the canvas directly
-canvas?.addEventListener('click', e => {
+/*************************************************************
+ * INPUT
+ *************************************************************/
+function handleCanvasClick(e) {
   if (isGameOver) return;
-
-  // Compute which cell was clicked
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
+  movePlayer(x, y);
+}
 
-  const cellW = canvas.width / baseCols;
+function handleCanvasTouchStart(e) {
+  if (isGameOver) return;
+  e.preventDefault();
+
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches[0];
+  const x = t.clientX - rect.left;
+  const y = t.clientY - rect.top;
+  movePlayer(x, y);
+}
+
+function movePlayer(x, y) {
+  const cellW = canvas.width  / baseCols;
   const cellH = canvas.height / baseRows;
-
-  let col = Math.floor(x / cellW);
-  let row = Math.floor(y / cellH);
-
-  // If "fastSpeed" is true, we could, for example, move 2 steps
-  const step = fastSpeed ? 2 : 1;
-
-  // Snap or clamp
-  playerPos.x = Math.max(0, Math.min(baseCols - 1, col));
-  playerPos.y = Math.max(0, Math.min(baseRows - 1, row));
-});
+  targetPos.x = Math.min(baseCols - 1, Math.max(0, x / cellW));
+  targetPos.y = Math.min(baseRows - 1, Math.max(0, y / cellH));
+}
