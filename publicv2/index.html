@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Summit Arcade</title>
+
+  <!-- Common CSS -->
+  <link rel="stylesheet" href="styles.css">
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" defer></script>
+
+  <!-- Arcade Core + Games -->
+  <script src="arcadeCore.js" defer></script>
+  <script src="testgame.js" defer></script>
+  <script src="frogger.js" defer></script>
+  <!-- future games: breakout.js, runner.js, spaceinvaders.js -->
+
+</head>
+<body onload="initArcade()">
+  <div id="content">
+    <!-- The container in which we create & size the canvas -->
+    <div id="gameContent" style="position: relative; width: 100%; height: 100%; background: black;">
+      <!-- canvas is created by arcadeCore.js -->
+    </div>
+  </div>
+</body>
+</html>

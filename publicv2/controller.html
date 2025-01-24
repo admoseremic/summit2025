@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Game Controller</title>
+  <style>
+    body {
+      background-color: #222;
+      color: white;
+      font-family: 'Press Start 2P', Arial, sans-serif;
+    }
+    #container {
+      display: flex;
+      flex-wrap: wrap; /* If you want them side by side on desktop, stacked on mobile */
+      width: 100%;
+      height: 100vh;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .column {
+      flex: 1;
+      min-width: 200px;
+      padding: 10px;
+    }
+    button {
+      padding: 10px;
+      margin: 5px;
+      font-size: 14px;
+      cursor: pointer;
+      background-color: #555;
+      color: white;
+      border: none;
+      border-radius: 8px;
+    }
+    button:hover {
+      background-color: #777;
+    }
+    h1 {
+      text-align: center;
+    }
+  </style>
+
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+  <script>
+    let db = null;
+    let currentGame = null;
+
+    // Initialize Firebase
+    fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
+      .then(resp => resp.json())
+      .then(data => {
+        const firebaseConfig = {
+          apiKey: data.apiKey,
+          authDomain: "summit-games-a1f9f.firebaseapp.com",
+          databaseURL: "https://summit-games-a1f9f-default-rtdb.firebaseio.com/",
+          projectId: "summit-games-a1f9f",
+          storageBucket: "summit-games-a1f9f.appspot.com",
+          messagingSenderId: "441105165656",
+          appId: "1:441105165656:web:277897c92f13365a98092d"
+        };
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.database();
+
+        listenForCurrentGame();
+      })
+      .catch(err => console.error('Error fetching Firebase config:', err));
+
+    function setCurrentGame(gameName) {
+      if (!db) return;
+      db.ref('currentGame').set(gameName)
+        .then(() => console.log("Set currentGame to", gameName))
+        .catch(err => console.error("Error:", err));
+    }
+
+    // Show/hide mechanic buttons depending on current game
+    function listenForCurrentGame() {
+      db.ref('currentGame').on('value', snapshot => {
+        currentGame = snapshot.val() || '';
+        updateMechanicsVisibility();
+      });
+    }
+
+    function updateMechanicsVisibility() {
+      // If the current game is 'testgame', show the fast speed & invincible
+      document.getElementById('testGameMechanics').style.display =
+        (currentGame === 'testgame') ? 'block' : 'none';
+
+      // If the current game is 'frogger', show frogger mechanics, etc.
+      // For now, we’ll just hide them
+    }
+
+    // Example toggles for testgame
+    function toggleFastSpeed() {
+      if (!db) return;
+      const ref = db.ref('mechanics/testgame/fastSpeed');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal);
+      });
+    }
+
+    function toggleInvincible() {
+      if (!db) return;
+      const ref = db.ref('mechanics/testgame/invincible');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal);
+      });
+    }
+  </script>
+</head>
+<body>
+  <h1>Game Controller</h1>
+  <div id="container">
+
+    <!-- LEFT COLUMN: List of Games -->
+    <div class="column">
+      <button onclick="setCurrentGame('testgame')">Test Game</button>
+      <button onclick="setCurrentGame('frogger')">Frogger</button>
+      <button onclick="setCurrentGame('breakout')">Breakout</button>
+      <button onclick="setCurrentGame('runner')">Runner</button>
+      <button onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
+    </div>
+
+    <!-- RIGHT COLUMN: Mechanics for the currently selected game -->
+    <div class="column" id="mechanicsPanel">
+      <!-- Test Game toggles (only show if currentGame === 'testgame') -->
+      <div id="testGameMechanics" style="display: none;">
+        <button onclick="toggleFastSpeed()">Toggle Fast Speed</button>
+        <button onclick="toggleInvincible()">Toggle Invincible</button>
+      </div>
+
+      <!-- Future: Frogger mechanics, Breakout mechanics, etc. -->
+    </div>
+
+  </div>
+</body>
+</html>
