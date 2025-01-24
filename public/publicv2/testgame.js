@@ -19,7 +19,7 @@ let previousTimestamp = 0;
  *************************************************************/
 function startTestGame() {
   // Show a title screen the first time
-  showTitleScreen('Test Game Title', () => {
+  showTitleScreen('Test Game Title tap fix?', () => {
     hideTitleScreen();
     initTestGame();
   });
