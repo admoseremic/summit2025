@@ -1,25 +1,24 @@
 /***********************************************************
  * testgame.js
- * - Shows a title screen on first load
- * - On game over, calls the common gameOver(...),
- *   passing a "restartCallback" to skip the title
+ * - Snaps to grid (no fractional positions)
+ * - Fixes mobile taps via touchstart
  ***********************************************************/
 
 // Game-specific variables
-let playerPos  = { x: 4,  y: 8 };
-let targetPos  = { x: 4,  y: 8 };
-let enemyPos   = { x: 4,  y: 2 };
+let playerPos  = { x: 4, y: 8  }; // current player position (floating, if you're lerping)
+let targetPos  = { x: 4, y: 8  }; // grid cell the player wants to reach
+let enemyPos   = { x: 4, y: 2  };
 let fastSpeed  = false;
 let invincible = false;
 
-let baseLerpSpeed = 3;  // cells/sec
+let baseLerpSpeed = 3;  // cells per second
 let previousTimestamp = 0;
 
 /*************************************************************
  * Called by arcadeCore.js -> loadGame('testgame')
  *************************************************************/
 function startTestGame() {
-  // Show a title screen only once, then call initTestGame
+  // Show a title screen the first time
   showTitleScreen('Test Game Title', () => {
     hideTitleScreen();
     initTestGame();
@@ -27,36 +26,36 @@ function startTestGame() {
 }
 
 /*************************************************************
- * Initialize game (no title screen)
+ * Initialize the game (no additional title screen here)
  *************************************************************/
 function initTestGame() {
   isGameOver = false;
   currentScore = 0;
 
   // Reset positions
-  playerPos = { x: 4, y: 8 };
-  targetPos = { x: 4, y: 8 };
-  enemyPos  = { x: 4, y: 2 };
+  playerPos  = { x: 4, y: 8 };
+  targetPos  = { x: 4, y: 8 };
+  enemyPos   = { x: 4, y: 2 };
 
   previousTimestamp = performance.now();
 
-  // Listen to mechanics toggles
+  // Listen to mechanic toggles
   listenToMechanics();
 
-  // Attach input listeners
+  // Attach input listeners (for both desktop clicks and mobile taps)
+  // Make sure these are added AFTER canvas is defined in arcadeCore.js
   canvas.addEventListener('click', handleCanvasClick);
   canvas.addEventListener('touchstart', handleCanvasTouchStart, { passive: false });
 
-  // Start loop
+  // Start the game loop
   animationFrameId = requestAnimationFrame(gameLoopTestGame);
 }
 
 /*************************************************************
- * Title Screen Helpers
- * (You can keep these in testgame.js or unify them in arcadeCore)
+ * Show/Hide Title Screen (you can keep them in testgame.js
+ * or move them into arcadeCore)
  *************************************************************/
 function showTitleScreen(title, onStart) {
-  // create an overlay
   const overlay = document.createElement('div');
   Object.assign(overlay.style, {
     position: 'absolute',
@@ -114,7 +113,7 @@ function listenToMechanics() {
   ref.off();
   ref.on('value', snap => {
     const val = snap.val() || {};
-    fastSpeed = !!val.fastSpeed;
+    fastSpeed  = !!val.fastSpeed;
     invincible = !!val.invincible;
   });
 }
@@ -135,39 +134,43 @@ function gameLoopTestGame(timestamp) {
 }
 
 /*************************************************************
- * UPDATE
+ * UPDATE LOGIC
  *************************************************************/
 function updateTestGame(deltaTime) {
-  // Lerp
+  // Lerp speed changes if fastSpeed is true
   const lerpSpeed = fastSpeed ? baseLerpSpeed * 2 : baseLerpSpeed;
+
+  // Lerp from playerPos to targetPos
   let dx = targetPos.x - playerPos.x;
   let dy = targetPos.y - playerPos.y;
-  let dist = Math.sqrt(dx*dx + dy*dy);
+  const dist = Math.sqrt(dx * dx + dy * dy);
 
   if (dist > 0.001) {
     const step = lerpSpeed * deltaTime;
     if (step >= dist) {
+      // reach target in this frame
       playerPos.x = targetPos.x;
       playerPos.y = targetPos.y;
     } else {
+      // partial movement
       playerPos.x += (dx / dist) * step;
       playerPos.y += (dy / dist) * step;
     }
   }
 
-  // Collision check
+  // Collision check with enemy
   if (!invincible) {
-    let ex = enemyPos.x - playerPos.x;
-    let ey = enemyPos.y - playerPos.y;
-    let enemyDist = Math.sqrt(ex*ex + ey*ey);
+    const ex = enemyPos.x - playerPos.x;
+    const ey = enemyPos.y - playerPos.y;
+    const enemyDist = Math.sqrt(ex * ex + ey * ey);
     if (enemyDist < 0.5) {
       // Game Over
-      gameOver(() => initTestGame());  // <--- PASS RESTART CALLBACK
+      gameOver(() => initTestGame());
       return;
     }
   }
 
-  // Increase score
+  // Increase score continuously for demonstration
   currentScore++;
   if (scoreElement) {
     scoreElement.innerText = 'Score: ' + currentScore;
@@ -180,8 +183,8 @@ function updateTestGame(deltaTime) {
 function renderTestGame() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-  const cellW = canvas.width  / baseCols;
-  const cellH = canvas.height / baseRows;
+  const cellW = canvas.width  / baseCols;  // baseCols=9
+  const cellH = canvas.height / baseRows;  // baseRows=16
 
   // Checkerboard
   for (let r = 0; r < baseRows; r++) {
@@ -191,40 +194,54 @@ function renderTestGame() {
     }
   }
 
-  // Enemy
+  // Enemy (red square)
   ctx.fillStyle = 'red';
   ctx.fillRect(enemyPos.x * cellW, enemyPos.y * cellH, cellW, cellH);
 
-  // Player
+  // Player (green square)
   ctx.fillStyle = 'green';
   ctx.fillRect(playerPos.x * cellW, playerPos.y * cellH, cellW, cellH);
 }
 
 /*************************************************************
- * INPUT
+ * INPUT HANDLERS
  *************************************************************/
 function handleCanvasClick(e) {
   if (isGameOver) return;
+
   const rect = canvas.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
-  movePlayer(x, y);
+
+  snapToGrid(x, y);
 }
 
 function handleCanvasTouchStart(e) {
   if (isGameOver) return;
-  e.preventDefault();
+  e.preventDefault();  // allow tap
 
   const rect = canvas.getBoundingClientRect();
-  const t = e.touches[0];
-  const x = t.clientX - rect.left;
-  const y = t.clientY - rect.top;
-  movePlayer(x, y);
+  const touch = e.touches[0];
+  const x = touch.clientX - rect.left;
+  const y = touch.clientY - rect.top;
+
+  snapToGrid(x, y);
 }
 
-function movePlayer(x, y) {
-  const cellW = canvas.width  / baseCols;
-  const cellH = canvas.height / baseRows;
-  targetPos.x = Math.min(baseCols - 1, Math.max(0, x / cellW));
-  targetPos.y = Math.min(baseRows - 1, Math.max(0, y / cellH));
+/**
+ * snapToGrid:
+ * Converts pixel coordinates (x, y) into integer grid coords,
+ * then sets targetPos so the player will lerp to that cell.
+ */
+function snapToGrid(x, y) {
+  const cellW = canvas.width  / baseCols; // 9
+  const cellH = canvas.height / baseRows; // 16
+
+  // Floor to the nearest integer grid cell
+  const col = Math.floor(x / cellW);
+  const row = Math.floor(y / cellH);
+
+  // Clamp within 0..(baseCols-1), 0..(baseRows-1)
+  targetPos.x = Math.max(0, Math.min(baseCols - 1, col));
+  targetPos.y = Math.max(0, Math.min(baseRows - 1, row));
 }
