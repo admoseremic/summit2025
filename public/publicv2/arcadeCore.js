@@ -1,36 +1,37 @@
-/***********************************************************
- * arcadeCore.js (Refactored)
- * 
- * - Has a single "gameOver(restartCallback)" for all games
- * - "Try Again" restarts the game without showing the title
- ***********************************************************/
+// arcadeCore.js
+// Import each game’s start function.
+import { startTestGame } from './testgame.js';
+import { startFrogger } from './frogger.js';
+import { startBreakout } from './breakout.js';
+import { startRunner } from './runner.js';
+import { startSpaceInvaders } from './spaceinvaders.js';
 
 // Global references
-let db;
-let username = null;
-let currentScore = 0;
-let highScore = 0;
-let game = '';       
-let isGameOver = false;
-let animationFrameId = null;
-let canvas, ctx;     
+const arcadeState = {
+  isGameOver: false,
+  currentScore: 0,
+  highScore: 0,
+  game: '',
+  animationFrameId: null,
+  db: null,
+  username: '',
+  canvas: null,
+  ctx: null,
+  baseCols: 9,
+  baseRows: 16,
+  scoreElement: null,
+  highScoreElement: null
+}
+window.arcadeState = arcadeState;
 
-// Logical grid size
-let baseCols = 9;
-let baseRows = 16;
-
-// Aspect ratio
 const ASPECT_RATIO = 9 / 16;
-
-// Scoreboard elements (created once)
-let scoreElement, highScoreElement;
 
 /*************************************************************
  * STOP GAME
  *************************************************************/
 function stopGame() {
-  if (animationFrameId) {
-    cancelAnimationFrame(animationFrameId);
+  if (arcadeState.animationFrameId) {
+    cancelAnimationFrame(arcadeState.animationFrameId);
   }
 }
 
@@ -41,31 +42,28 @@ function stopGame() {
  * 3) Retro-themed "Try Again" button, calls restartCallback
  *************************************************************/
 function gameOver(restartCallback) {
-  isGameOver = true;
+  arcadeState.isGameOver = true;
   stopGame();
 
   // Check if new high score
-  if (username && currentScore > highScore) {
-    const userRef = db.ref('attendees');
-    userRef.orderByChild('name').equalTo(username).once('value', snapshot => {
+  if (arcadeState.username && arcadeState.currentScore > arcadeState.highScore) {
+    const userRef = arcadeState.db.ref('attendees');
+    userRef.orderByChild('name').equalTo(arcadeState.username).once('value', snapshot => {
       if (snapshot.exists()) {
         let userData = snapshot.val();
         let userId = Object.keys(userData)[0];
         let updates = {};
-        // Example: storing all game scores under "frogger" for now
-        updates[`/attendees/${userId}/frogger`] = currentScore;
+        updates[`/attendees/${userId}/${arcadeState.game}`] = arcadeState.currentScore;
         db.ref().update(updates);
       }
     });
   }
-
   // Clear canvas and show "Game Over"
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.fillStyle = 'white';
-  ctx.font = '40px "Press Start 2P"';
-  ctx.textAlign = 'center';
-  ctx.fillText('Game Over', canvas.width / 2, canvas.height / 2 - 20);
-
+  arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
+  arcadeState.ctx.fillStyle = 'white';
+  arcadeState.ctx.font = '40px "Press Start 2P"';
+  arcadeState.ctx.textAlign = 'center';
+  arcadeState.ctx.fillText('Game Over', arcadeState.canvas.width / 2, arcadeState.canvas.height / 2 - 20);
   // Retro-themed "Try Again" button
   const tryAgainButton = document.createElement('button');
   tryAgainButton.id = 'tryagain';
@@ -88,7 +86,7 @@ function gameOver(restartCallback) {
   // On click, remove button and call the restart callback (skipping the title screen)
   tryAgainButton.onclick = () => {
     document.body.removeChild(tryAgainButton);
-    restartCallback();  
+    restartCallback();
   };
 
   document.body.appendChild(tryAgainButton);
@@ -98,42 +96,93 @@ function gameOver(restartCallback) {
  * loadGame(gameName)
  * Called when 'currentGame' changes or on initial load
  *************************************************************/
-function loadGame(gameName) {
-  // Basic resets
-  currentScore = 0;
-  highScore = 0;
-  isGameOver = false;
-  game = gameName;
+export function loadGame(gameName) {
+  console.log("Switching to game:", gameName);
+  clearGame();
+  // Reset common state.
+  arcadeState.currentScore = 0;
+  arcadeState.highScore = 0;
+  arcadeState.isGameOver = false;
+  arcadeState.game = gameName;
 
-  // Reset scoreboard text
-  if (scoreElement) scoreElement.innerText = 'Score: 0';
-  if (highScoreElement) highScoreElement.innerText = 'High Score: 0';
-
-  // Retrieve high score from Firebase
-  if (username) {
-    let userRef = db.ref('attendees');
-    userRef.orderByChild('name').equalTo(username).once('value', snapshot => {
+  // Retrieve high score for the selected game.
+  if (arcadeState.username) {
+    let userRef = arcadeState.db.ref('attendees');
+    userRef.orderByChild('name').equalTo(arcadeState.username).once('value', snapshot => {
       if (snapshot.exists()) {
         let userData = snapshot.val();
         let userId = Object.keys(userData)[0];
         let user = userData[userId];
-        // Using the 'frogger' node for consistency
-        highScore = user.frogger || 0;
-        if (highScoreElement) {
-          highScoreElement.innerText = 'High Score: ' + highScore;
+        switch (gameName) {
+          case "testgame":
+            arcadeState.highScore = user.frogger || 0;
+            break;
+          case "breakout":
+            arcadeState.highScore = user.breakout || 0;
+            break;
+          case "frogger":
+            arcadeState.highScore = user.frogger || 0;
+            break;
+          case "spaceinvaders":
+            arcadeState.highScore = user.spaceinvaders || 0;
+            break;
+          case "runner":
+            arcadeState.highScore = user.runner || 0;
+            break;
+          default:
+            arcadeState.highScore = 0;
+        }
+        if (arcadeState.highScoreElement) {
+          arcadeState.highScoreElement.innerText = 'High Score: ' + arcadeState.highScore;
         }
       }
     });
   }
-
-  // Start the appropriate game
-  if (gameName === 'testgame') {
-    startTestGame();  // See testgame.js below
-  } else if (gameName === 'frogger') {
-    startFrogger();
-  } else {
-    console.log(`Unknown game: ${gameName}`);
+  // Call the appropriate game start function.
+  switch (gameName) {
+    case "spaceinvaders":
+      startSpaceInvaders();
+      break;
+    case "frogger":
+      startFrogger();
+      break;
+    case "breakout":
+      startBreakout();
+      break;
+    case "runner":
+      startRunner();
+      break;
+    case "testgame":
+      startTestGame();
+      break;
+    default:
+      console.error("Unknown game:", gameName);
   }
+}
+
+function clearGame() {
+  // Stop any running animation frames.
+  stopGame();
+  
+  // Remove the "Try Again" button if it exists.
+  const tryAgainButton = document.getElementById('tryagain');
+  if (tryAgainButton) {
+    tryAgainButton.remove();
+  }
+  
+  // Remove the title overlay if it exists.
+  const titleOverlay = document.getElementById('titleOverlay');
+  if (titleOverlay) {
+    titleOverlay.remove();
+  }
+  
+  // Clear the game container so that no remnants of the previous game remain.
+  const container = document.getElementById('gameContent');
+  container.innerHTML = '';
+  
+  // Rebuild the canvas and scoreboard.
+  setupCanvas();
+  createScoreboardElements();
 }
 
 /*************************************************************
@@ -143,15 +192,39 @@ function setupCanvas() {
   const container = document.getElementById('gameContent');
   container.innerHTML = '';
 
-  canvas = document.createElement('canvas');
-  canvas.id = 'gameCanvas';
-  canvas.style.border = '4px solid white'; // differentiate from black BG
-  container.appendChild(canvas);
-  ctx = canvas.getContext('2d');
+  // Create a wrapper div to hold the canvas and to provide padding
+  const wrapper = document.createElement('div');
+  wrapper.id = "gameWrapper";
+  // Make sure the wrapper is centered and has padding (4px on all sides)
+  wrapper.style.position = "relative";
+  wrapper.style.padding = "4px"; // this extra padding ensures the border isn't clipped
+  wrapper.style.margin = "auto"; // center the wrapper
+  container.appendChild(wrapper);
 
-  // Listen to window resize
-  window.addEventListener('resize', resizeCanvas);
-  resizeCanvas();
+  arcadeState.canvas = document.createElement('canvas');
+  arcadeState.canvas.id = 'gameCanvas';
+  // The white border will now be fully visible because the wrapper provides space
+  arcadeState.canvas.style.border = '4px solid white';
+  wrapper.appendChild(arcadeState.canvas);
+
+  arcadeState.ctx = arcadeState.canvas.getContext('2d');
+
+  function resize() {
+    // Subtract the wrapper’s total padding (8px) from the available width/height
+    const availableWidth = window.innerWidth - 8;
+    const availableHeight = window.innerHeight - 8;
+    const ratio = availableWidth / availableHeight;
+
+    if (ratio > ASPECT_RATIO) {
+      arcadeState.canvas.height = availableHeight;
+      arcadeState.canvas.width = availableHeight * ASPECT_RATIO;
+    } else {
+      arcadeState.canvas.width = availableWidth;
+      arcadeState.canvas.height = availableWidth / ASPECT_RATIO;
+    }
+  }
+  window.addEventListener('resize', resize);
+  resize();
 }
 
 function resizeCanvas() {
@@ -160,41 +233,50 @@ function resizeCanvas() {
   const ratio = w / h;
 
   if (ratio > ASPECT_RATIO) {
-    canvas.height = h;
-    canvas.width = h * ASPECT_RATIO;
+    arcadeState.canvas.height = h;
+    arcadeState.canvas.width = h * ASPECT_RATIO;
   } else {
-    canvas.width = w;
-    canvas.height = w / ASPECT_RATIO;
+    arcadeState.canvas.width = w;
+    arcadeState.canvas.height = w / ASPECT_RATIO;
   }
 }
 
 function createScoreboardElements() {
+  // Get the game wrapper (created in setupCanvas)
+  const wrapper = document.getElementById('gameWrapper');
+  if (!wrapper) {
+    console.error("Game wrapper not found.");
+    return;
+  }
   if (document.getElementById('scoreContainer')) return;
 
-  const container = document.createElement('div');
-  container.id = 'scoreContainer';
-  Object.assign(container.style, {
+  const scoreContainer = document.createElement('div');
+  scoreContainer.id = 'scoreContainer';
+  // Position the scoreboard relative to the wrapper
+  Object.assign(scoreContainer.style, {
     position: 'absolute',
     top: '10px',
-    left: '0',
-    width: '100%',
+    left: '10px',
+    right: '10px',
     display: 'flex',
     justifyContent: 'space-between',
-    padding: '0 10px',
     pointerEvents: 'none'
   });
 
-  scoreElement = document.createElement('div');
-  styleScoreElement(scoreElement);
-  scoreElement.innerText = 'Score: 0';
+  arcadeState.scoreElement = document.createElement('div');
+  arcadeState.scoreElement.id = 'scoreElement';
+  arcadeState.scoreElement.innerText = 'Score: 0';
+  styleScoreElement(arcadeState.scoreElement);
 
-  highScoreElement = document.createElement('div');
-  styleScoreElement(highScoreElement);
-  highScoreElement.innerText = 'High Score: 0';
+  arcadeState.highScoreElement = document.createElement('div');
+  arcadeState.highScoreElement.id = 'highScoreElement';
+  arcadeState.highScoreElement.innerText = 'High Score: 0';
+  styleScoreElement(arcadeState.highScoreElement);
 
-  container.appendChild(scoreElement);
-  container.appendChild(highScoreElement);
-  document.body.appendChild(container);
+  scoreContainer.appendChild(arcadeState.scoreElement);
+  scoreContainer.appendChild(arcadeState.highScoreElement);
+  // Append the scoreboard inside the wrapper so it overlays the canvas
+  wrapper.appendChild(scoreContainer);
 }
 
 function styleScoreElement(el) {
@@ -222,10 +304,10 @@ function initArcade() {
         appId: "1:441105165656:web:277897c92f13365a98092d"
       };
       firebase.initializeApp(config);
-      db = firebase.database();
+      arcadeState.db = firebase.database();
 
       // Setup user, canvas, scoreboard, etc.
-      username = localStorage.getItem('username') || "Guest";
+      arcadeState.username = localStorage.getItem('username') || "Guest";
       setupCanvas();
       createScoreboardElements();
 
@@ -236,10 +318,65 @@ function initArcade() {
 }
 
 function listenForGameChanges() {
-  const gameRef = db.ref('currentGame');
+  const gameRef = arcadeState.db.ref('currentGame');
   gameRef.on('value', snapshot => {
     stopGame();
     const newGame = snapshot.val() || 'testgame';
     loadGame(newGame);
   });
 }
+
+function showTitleScreen(title, onStart) {
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999
+  });
+  overlay.id = 'titleOverlay';
+
+  const h1 = document.createElement('h1');
+  h1.innerText = title;
+  h1.style.color = 'white';
+
+  const startBtn = document.createElement('button');
+  startBtn.innerText = 'Start';
+  Object.assign(startBtn.style, {
+    fontFamily: '"Press Start 2P", sans-serif',
+    fontSize: '16px',
+    padding: '10px 20px',
+    border: '4px solid white',
+    cursor: 'pointer',
+    backgroundColor: '#000',
+    color: '#fff',
+    marginTop: '20px'
+  });
+  startBtn.onclick = () => {
+    document.body.removeChild(overlay);
+    if (onStart) onStart();
+  };
+
+  overlay.appendChild(h1);
+  overlay.appendChild(startBtn);
+  document.body.appendChild(overlay);
+}
+
+function hideTitleScreen() {
+  const overlay = document.getElementById('titleOverlay');
+  if (overlay) {
+    document.body.removeChild(overlay);
+  }
+}
+
+window.initArcade = initArcade;
+window.showTitleScreen = showTitleScreen;
+window.hideTitleScreen = hideTitleScreen;
+window.gameOver = gameOver;
