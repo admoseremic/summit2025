@@ -140,7 +140,7 @@ function gameLoopBreakout(timestamp) {
 // --- Update Logic ---
 function updateBreakout(deltaTime) {
     // Paddle movement: Lerp the paddle's x toward targetX (at 6 arcade units/sec).
-    const paddleLerpSpeed = 6;
+    const paddleLerpSpeed = 8;
     let diff = breakoutPaddle.targetX - breakoutPaddle.x;
     let step = paddleLerpSpeed * deltaTime;
     if (Math.abs(diff) <= step) {
@@ -178,33 +178,39 @@ function updateBreakout(deltaTime) {
             breakoutBalls.splice(i, 1);
             console.log("Sound: ball lost");
         }
-
         // Paddle collision:
         if (
             ball.y + ball.height >= breakoutPaddle.y &&
             ball.y + ball.height <= breakoutPaddle.y + breakoutPaddle.height &&
             ball.x + ball.width >= breakoutPaddle.x &&
             ball.x <= breakoutPaddle.x + breakoutPaddle.width &&
-            ball.vy > 0
+            ball.vy > 0  // Only if the ball is moving downward.
         ) {
-            // Calculate offset: distance from paddle center (normalized to [-1, 1])
+            // Compute the ball's center and paddle's center.
             let ballCenter = ball.x + ball.width / 2;
             let paddleCenter = breakoutPaddle.x + breakoutPaddle.width / 2;
+            // Normalize the difference so that hitting the left edge gives -1,
+            // the center gives 0, and the right edge gives 1.
             let offset = (ballCenter - paddleCenter) / (breakoutPaddle.width / 2);
+            // Clamp offset to [-1, 1] (for safety).
+            offset = Math.max(-1, Math.min(1, offset));
 
-            // Invert vertical velocity and add an offset angle (max ±45°).
-            let currentAngle = Math.atan2(ball.vx, -ball.vy);
-            let angleAdjustment = offset * (45 * Math.PI / 180);
-            let newAngle = currentAngle + angleAdjustment;
-            newAngle = Math.max(-45 * Math.PI / 180, Math.min(45 * Math.PI / 180, newAngle));
+            // Compute the new angle purely from the offset:
+            // offset of 0 -> 0° deviation (ball goes straight up)
+            // offset of 1 -> +45° (to the right), offset of -1 -> -45° (to the left)
+            let newAngle = offset * (45 * Math.PI / 180);
 
+            // Get the ball's current speed.
             let speed = Math.sqrt(ball.vx * ball.vx + ball.vy * ball.vy);
+            // Set the new velocity based solely on newAngle.
             ball.vx = speed * Math.sin(newAngle);
             ball.vy = -speed * Math.cos(newAngle);
+
             // Position the ball just above the paddle.
             ball.y = breakoutPaddle.y - ball.height - 0.01;
             console.log("Sound: paddle bounce");
         }
+
 
         // Brick collisions:
         for (let j = 0; j < bricks.length; j++) {
