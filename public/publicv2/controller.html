@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <title>Game Controller</title>
   <style>
     body {
@@ -9,19 +10,23 @@
       color: white;
       font-family: 'Press Start 2P', Arial, sans-serif;
     }
+
     #container {
       display: flex;
-      flex-wrap: wrap; /* Side-by-side on desktop, stacked on mobile */
+      flex-wrap: wrap;
+      /* Stack on mobile, side-by-side on desktop */
       width: 100%;
       height: 100vh;
       justify-content: center;
       align-items: flex-start;
     }
+
     .column {
       flex: 1;
       min-width: 200px;
       padding: 10px;
     }
+
     button {
       padding: 10px;
       margin: 5px;
@@ -32,10 +37,13 @@
       border: none;
       border-radius: 8px;
     }
+
     button:hover {
       background-color: #777;
     }
-    h1 {
+
+    h1,
+    h2 {
       text-align: center;
     }
   </style>
@@ -45,7 +53,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
 
   <script>
-    // Embedded controller logic
     let db = null;
     let currentGame = null;
 
@@ -62,17 +69,15 @@
           messagingSenderId: "441105165656",
           appId: "1:441105165656:web:277897c92f13365a98092d"
         };
-
-        // If firebase is not already initialized (as it might be in arcadeCore.js), initialize it here.
         if (!firebase.apps.length) {
           firebase.initializeApp(firebaseConfig);
         }
         db = firebase.database();
-
         listenForCurrentGame();
       })
       .catch(err => console.error('Error fetching Firebase config:', err));
 
+    // Set the current game in Firebase so that all clients switch games.
     function setCurrentGame(gameName) {
       if (!db) return;
       db.ref('currentGame').set(gameName)
@@ -80,7 +85,7 @@
         .catch(err => console.error("Error:", err));
     }
 
-    // Listen for changes to currentGame in Firebase.
+    // Listen for changes to currentGame.
     function listenForCurrentGame() {
       db.ref('currentGame').on('value', snapshot => {
         currentGame = snapshot.val() || '';
@@ -88,40 +93,66 @@
       });
     }
 
-    // Update the mechanics panel visibility based on the active game.
+    // Show the appropriate mechanics panel based on the current game.
     function updateMechanicsVisibility() {
-      // For testgame:
-      document.getElementById('testGameMechanics').style.display =
-        (currentGame === 'testgame') ? 'block' : 'none';
-      // For breakout:
-      document.getElementById('breakoutMechanics').style.display =
-        (currentGame === 'breakout') ? 'block' : 'none';
+      const froggerPanel = document.getElementById('froggerMechanics');
+      const breakoutPanel = document.getElementById('breakoutMechanics');
+
+      if (currentGame === 'frogger') {
+        froggerPanel.style.display = 'block';
+      } else {
+        froggerPanel.style.display = 'none';
+      }
+
+      if (currentGame === 'breakout') {
+        breakoutPanel.style.display = 'block';
+      } else {
+        breakoutPanel.style.display = 'none';
+      }
     }
 
-    // --- Test Game Toggles ---
-    function toggleFastSpeed() {
+    // Frogger mechanics toggles
+    function toggleLongerLogs() {
       if (!db) return;
-      const ref = db.ref('mechanics/testgame/fastSpeed');
+      const ref = db.ref('mechanics/frogger/longerLogs');
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
-        ref.set(!currentVal);
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled longerLogs to", !currentVal))
+          .catch(err => console.error("Error toggling longerLogs:", err));
       });
     }
 
-    function toggleInvincible() {
+    function toggleSlowCars() {
       if (!db) return;
-      const ref = db.ref('mechanics/testgame/invincible');
+      const ref = db.ref('mechanics/frogger/slowCars');
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
-        ref.set(!currentVal);
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled slowCars to", !currentVal))
+          .catch(err => console.error("Error toggling slowCars:", err));
       });
     }
 
-    // --- Breakout Toggles ---
-    function addBallMechanic() {
+    function toggleVerticalCenterMode() {
       if (!db) return;
-      // Signal a new ball by writing a timestamp.
-      db.ref('mechanics/breakout/addBall').set(Date.now());
+      const ref = db.ref('mechanics/frogger/verticalCenterMode');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled verticalCenterMode to", !currentVal))
+          .catch(err => console.error("Error toggling verticalCenterMode:", err));
+      });
+    }
+
+    // Breakout mechanics toggles
+    function toggleAddBall() {
+      if (!db) return;
+      const ref = db.ref('mechanics/breakout/addBall');
+      // For addBall, simply set a flag (which your breakout game will clear after spawning a ball)
+      ref.set(true)
+        .then(() => console.log("Triggered addBall mechanic"))
+        .catch(err => console.error("Error triggering addBall:", err));
     }
 
     function toggleWiderPaddle() {
@@ -129,7 +160,9 @@
       const ref = db.ref('mechanics/breakout/widerPaddle');
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
-        ref.set(!currentVal);
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled widerPaddle to", !currentVal))
+          .catch(err => console.error("Error toggling widerPaddle:", err));
       });
     }
 
@@ -138,15 +171,17 @@
       const ref = db.ref('mechanics/breakout/largerBalls');
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
-        ref.set(!currentVal);
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled largerBalls to", !currentVal))
+          .catch(err => console.error("Error toggling largerBalls:", err));
       });
     }
   </script>
 </head>
+
 <body>
   <h1>Game Controller</h1>
   <div id="container">
-
     <!-- LEFT COLUMN: List of Games -->
     <div class="column">
       <button onclick="setCurrentGame('testgame')">Test Game</button>
@@ -156,22 +191,25 @@
       <button onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
     </div>
 
-    <!-- RIGHT COLUMN: Mechanics for the currently selected game -->
+    <!-- RIGHT COLUMN: Mechanics Panels -->
     <div class="column" id="mechanicsPanel">
-      <!-- Test Game mechanics toggles (visible if currentGame is 'testgame') -->
-      <div id="testGameMechanics" style="display: none;">
-        <button onclick="toggleFastSpeed()">Toggle Fast Speed</button>
-        <button onclick="toggleInvincible()">Toggle Invincible</button>
+      <!-- Frogger Mechanics -->
+      <div id="froggerMechanics" style="display: none;">
+        <h2>Frogger Mechanics</h2>
+        <button onclick="toggleLongerLogs()">Toggle Longer Logs</button>
+        <button onclick="toggleSlowCars()">Toggle Slow Cars</button>
+        <button onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
       </div>
-      <!-- Breakout mechanics toggles (visible if currentGame is 'breakout') -->
+
+      <!-- Breakout Mechanics -->
       <div id="breakoutMechanics" style="display: none;">
-        <button onclick="addBallMechanic()">Add a Ball</button>
+        <h2>Breakout Mechanics</h2>
+        <button onclick="toggleAddBall()">Add Ball</button>
         <button onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
         <button onclick="toggleLargerBalls()">Toggle Larger Balls</button>
       </div>
-      <!-- You can add additional mechanics for frogger, runner, etc. here -->
     </div>
-
   </div>
 </body>
+
 </html>

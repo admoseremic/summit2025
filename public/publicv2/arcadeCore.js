@@ -54,7 +54,7 @@ function gameOver(restartCallback) {
         let userId = Object.keys(userData)[0];
         let updates = {};
         updates[`/attendees/${userId}/${arcadeState.game}`] = arcadeState.currentScore;
-        db.ref().update(updates);
+        arcadeState.db.ref().update(updates);
       }
     });
   }
