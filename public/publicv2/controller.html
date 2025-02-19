@@ -14,7 +14,6 @@
     #container {
       display: flex;
       flex-wrap: wrap;
-      /* Stack on mobile, side-by-side on desktop */
       width: 100%;
       height: 100vh;
       justify-content: center;
@@ -97,21 +96,14 @@
     function updateMechanicsVisibility() {
       const froggerPanel = document.getElementById('froggerMechanics');
       const breakoutPanel = document.getElementById('breakoutMechanics');
+      const spaceinvadersPanel = document.getElementById('spaceinvadersMechanics');
 
-      if (currentGame === 'frogger') {
-        froggerPanel.style.display = 'block';
-      } else {
-        froggerPanel.style.display = 'none';
-      }
-
-      if (currentGame === 'breakout') {
-        breakoutPanel.style.display = 'block';
-      } else {
-        breakoutPanel.style.display = 'none';
-      }
+      froggerPanel.style.display = (currentGame === 'frogger') ? 'block' : 'none';
+      breakoutPanel.style.display = (currentGame === 'breakout') ? 'block' : 'none';
+      spaceinvadersPanel.style.display = (currentGame === 'spaceinvaders') ? 'block' : 'none';
     }
 
-    // Frogger mechanics toggles
+    // --- Frogger Mechanics Toggles ---
     function toggleLongerLogs() {
       if (!db) return;
       const ref = db.ref('mechanics/frogger/longerLogs');
@@ -145,11 +137,10 @@
       });
     }
 
-    // Breakout mechanics toggles
+    // --- Breakout Mechanics Toggles ---
     function toggleAddBall() {
       if (!db) return;
       const ref = db.ref('mechanics/breakout/addBall');
-      // For addBall, simply set a flag (which your breakout game will clear after spawning a ball)
       ref.set(true)
         .then(() => console.log("Triggered addBall mechanic"))
         .catch(err => console.error("Error triggering addBall:", err));
@@ -176,6 +167,40 @@
           .catch(err => console.error("Error toggling largerBalls:", err));
       });
     }
+
+    // --- Space Invaders Mechanics Toggles ---
+    function toggleInfiniteShooting() {
+      if (!db) return;
+      const ref = db.ref('mechanics/spaceinvaders/infiniteShooting');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled infiniteShooting to", !currentVal))
+          .catch(err => console.error("Error toggling infiniteShooting:", err));
+      });
+    }
+
+    function toggleTripleShot() {
+      if (!db) return;
+      const ref = db.ref('mechanics/spaceinvaders/tripleShot');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled tripleShot to", !currentVal))
+          .catch(err => console.error("Error toggling tripleShot:", err));
+      });
+    }
+
+    function toggleFriendlyFire() {
+      if (!db) return;
+      const ref = db.ref('mechanics/spaceinvaders/friendlyFire');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled friendlyFire to", !currentVal))
+          .catch(err => console.error("Error toggling friendlyFire:", err));
+      });
+    }
   </script>
 </head>
 
@@ -190,7 +215,6 @@
       <button onclick="setCurrentGame('runner')">Runner</button>
       <button onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
     </div>
-
     <!-- RIGHT COLUMN: Mechanics Panels -->
     <div class="column" id="mechanicsPanel">
       <!-- Frogger Mechanics -->
@@ -200,13 +224,19 @@
         <button onclick="toggleSlowCars()">Toggle Slow Cars</button>
         <button onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
       </div>
-
       <!-- Breakout Mechanics -->
       <div id="breakoutMechanics" style="display: none;">
         <h2>Breakout Mechanics</h2>
         <button onclick="toggleAddBall()">Add Ball</button>
         <button onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
         <button onclick="toggleLargerBalls()">Toggle Larger Balls</button>
+      </div>
+      <!-- Space Invaders Mechanics -->
+      <div id="spaceinvadersMechanics" style="display: none;">
+        <h2>Space Invaders Mechanics</h2>
+        <button onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
+        <button onclick="toggleTripleShot()">Toggle Triple Shot</button>
+        <button onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
       </div>
     </div>
   </div>
