@@ -27,7 +27,7 @@ let previousTimestamp = 0;
 // Called by arcadeCore.js when currentGame is set to "breakout"
 function startBreakout() {
     // Show the title screen on first load, then initialize breakout.
-    showTitleScreen('Breakout', () => {
+    showTitleScreen('"Breakout" of \nLimiting Datasets!', () => {
         hideTitleScreen();
         initBreakout();
     });

@@ -256,7 +256,7 @@ function createLogForRow(rowIndex, direction) {
 // Entry Point: Start Frogger
 // --------------------
 function startFrogger() {
-  showTitleScreen('Frogger', () => {
+  showTitleScreen('Debugger Frogger!', () => {
     hideTitleScreen();
     initFrogger();
   });

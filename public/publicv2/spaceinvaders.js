@@ -490,7 +490,7 @@ function initSpaceInvaders() {
 
 // --- Start Space Invaders ---
 function startSpaceInvaders() {
-  showTitleScreen('Space Invaders', () => {
+  showTitleScreen('Data Viz Invaders!', () => {
     hideTitleScreen();
     initSpaceInvaders();
   });

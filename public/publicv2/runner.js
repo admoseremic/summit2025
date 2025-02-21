@@ -473,7 +473,7 @@ function listenToRunnerMechanics() {
 }
 
 function startRunner() {
-  showTitleScreen("Runner", () => {
+  showTitleScreen("Running With\nDerived Fields!", () => {
     hideTitleScreen();
     initRunner();
   });

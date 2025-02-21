@@ -379,6 +379,9 @@ function showTitleScreen(title, onStart) {
   const h1 = document.createElement('h1');
   h1.innerText = title;
   h1.style.color = 'white';
+  h1.style.textAlign = 'center';
+  h1.style.whiteSpace = 'pre-line';
+  h1.style.lineHeight = '1.5';
 
   const startBtn = document.createElement('button');
   startBtn.innerText = 'Start';
