@@ -97,10 +97,12 @@
       const froggerPanel = document.getElementById('froggerMechanics');
       const breakoutPanel = document.getElementById('breakoutMechanics');
       const spaceinvadersPanel = document.getElementById('spaceinvadersMechanics');
+      const runnerPanel = document.getElementById('runnerMechanics');
 
       froggerPanel.style.display = (currentGame === 'frogger') ? 'block' : 'none';
       breakoutPanel.style.display = (currentGame === 'breakout') ? 'block' : 'none';
       spaceinvadersPanel.style.display = (currentGame === 'spaceinvaders') ? 'block' : 'none';
+      runnerPanel.style.display = (currentGame === 'runner') ? 'block' : 'none';
     }
 
     // --- Frogger Mechanics Toggles ---
@@ -201,6 +203,40 @@
           .catch(err => console.error("Error toggling friendlyFire:", err));
       });
     }
+
+    // --- Runner Mechanics Toggles ---
+    function toggleDoubleJump() {
+      if (!db) return;
+      const ref = db.ref('mechanics/runner/doubleJump');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled doubleJump to", !currentVal))
+          .catch(err => console.error("Error toggling doubleJump:", err));
+      });
+    }
+
+    function toggleBridges() {
+      if (!db) return;
+      const ref = db.ref('mechanics/runner/bridges');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled bridges to", !currentVal))
+          .catch(err => console.error("Error toggling bridges:", err));
+      });
+    }
+
+    function toggleCoins() {
+      if (!db) return;
+      const ref = db.ref('mechanics/runner/coins');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => console.log("Toggled coins to", !currentVal))
+          .catch(err => console.error("Error toggling coins:", err));
+      });
+    }
   </script>
 </head>
 
@@ -237,6 +273,13 @@
         <button onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
         <button onclick="toggleTripleShot()">Toggle Triple Shot</button>
         <button onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
+      </div>
+      <!-- Runner Mechanics -->
+      <div id="runnerMechanics" style="display: none;">
+        <h2>Runner Mechanics</h2>
+        <button onclick="toggleDoubleJump()">Toggle Double Jump</button>
+        <button onclick="toggleBridges()">Toggle Bridges</button>
+        <button onclick="toggleCoins()">Toggle Coins</button>
       </div>
     </div>
   </div>
