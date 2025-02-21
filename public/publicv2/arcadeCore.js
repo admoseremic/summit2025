@@ -163,23 +163,23 @@ export function loadGame(gameName) {
 function clearGame() {
   // Stop any running animation frames.
   stopGame();
-  
+
   // Remove the "Try Again" button if it exists.
   const tryAgainButton = document.getElementById('tryagain');
   if (tryAgainButton) {
     tryAgainButton.remove();
   }
-  
+
   // Remove the title overlay if it exists.
   const titleOverlay = document.getElementById('titleOverlay');
   if (titleOverlay) {
     titleOverlay.remove();
   }
-  
+
   // Clear the game container so that no remnants of the previous game remain.
   const container = document.getElementById('gameContent');
   container.innerHTML = '';
-  
+
   // Rebuild the canvas and scoreboard.
   setupCanvas();
   createScoreboardElements();
@@ -277,6 +277,31 @@ function createScoreboardElements() {
   scoreContainer.appendChild(arcadeState.highScoreElement);
   // Append the scoreboard inside the wrapper so it overlays the canvas
   wrapper.appendChild(scoreContainer);
+
+  // After the scoreboard elements are created (e.g., in createScoreboardElements)
+  const scoreObserver = new MutationObserver((mutationsList) => {
+    for (const mutation of mutationsList) {
+      if (mutation.type === 'childList') {
+        // Extract the numeric score from the score element's text.
+        // Assuming the format is "Score: 100"
+        const scoreText = arcadeState.scoreElement.innerText;
+        const currentScore = parseInt(scoreText.replace('Score: ', ''), 10);
+
+        // Compare with the stored high score and update if necessary.
+        if (currentScore > arcadeState.highScore) {
+          arcadeState.highScore = currentScore;
+          arcadeState.highScoreElement.innerText = 'High Score: ' + currentScore;
+        }
+      }
+    }
+  });
+
+  // Configure the observer to listen for changes to the child nodes.
+  const observerConfig = { childList: true };
+
+  // Start observing the score element.
+  scoreObserver.observe(arcadeState.scoreElement, observerConfig);
+
 }
 
 function styleScoreElement(el) {
@@ -290,6 +315,16 @@ function styleScoreElement(el) {
  * Initialize Arcade (Called on page load)
  *************************************************************/
 function initArcade() {
+  const storedUsername = localStorage.getItem('username');
+  if (!storedUsername) {
+    promptForUsername(() => {
+      // Once a username is entered, re-call initArcade.
+      initArcade();
+    });
+    return; // Stop here until the username is provided.
+  }
+  // Set the username in your arcade state.
+  arcadeState.username = storedUsername;
   // Initialize Firebase
   fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
     .then(resp => resp.json())
@@ -306,8 +341,6 @@ function initArcade() {
       firebase.initializeApp(config);
       arcadeState.db = firebase.database();
 
-      // Setup user, canvas, scoreboard, etc.
-      arcadeState.username = localStorage.getItem('username') || "Guest";
       setupCanvas();
       createScoreboardElements();
 
@@ -374,6 +407,82 @@ function hideTitleScreen() {
   if (overlay) {
     document.body.removeChild(overlay);
   }
+}
+
+function promptForUsername(callback) {
+  // Create a full-screen overlay.
+  const overlay = document.createElement('div');
+  overlay.id = 'usernameOverlay';
+  Object.assign(overlay.style, {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.85)',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10000
+  });
+
+  // Create a prompt label.
+  const label = document.createElement('label');
+  label.innerText = "Enter your username to play:";
+  label.style.color = 'white';
+  label.style.fontFamily = '"Press Start 2P", sans-serif';
+  label.style.fontSize = '16px';
+  label.style.marginBottom = '20px';
+  overlay.appendChild(label);
+
+  // Create the input field.
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.style.fontSize = '16px';
+  input.style.padding = '10px';
+  input.style.border = '2px solid white';
+  input.style.backgroundColor = '#333';
+  input.style.color = 'white';
+  input.style.fontFamily = '"Press Start 2P", sans-serif';
+  input.style.textAlign = 'center';
+  overlay.appendChild(input);
+
+  // Create the submit button.
+  const button = document.createElement('button');
+  button.innerText = "Submit";
+  Object.assign(button.style, {
+    marginTop: '20px',
+    fontFamily: '"Press Start 2P", sans-serif',
+    fontSize: '16px',
+    padding: '10px 20px',
+    border: '4px solid white',
+    cursor: 'pointer',
+    backgroundColor: '#000',
+    color: '#fff'
+  });
+  overlay.appendChild(button);
+
+  // When the button is clicked, validate the input.
+  button.addEventListener('click', () => {
+    const username = input.value.trim();
+    if (username) {
+      localStorage.setItem('username', username);
+      document.body.removeChild(overlay);
+      if (callback) callback(username);
+    } else {
+      alert("Please enter a valid username.");
+    }
+  });
+
+  // Optionally, allow the Enter key to submit.
+  input.addEventListener('keyup', (e) => {
+    if (e.key === "Enter") {
+      button.click();
+    }
+  });
+
+  document.body.appendChild(overlay);
 }
 
 window.initArcade = initArcade;

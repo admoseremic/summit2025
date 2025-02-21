@@ -14,6 +14,7 @@ let bricks = [];        // Array of brick objects
 let ballSpeed = 5;      // Initial ball speed (arcade units/sec)
 let ballSize = 0.5;     // Ball size (0.5 by default; toggles to 1)
 let speedTimer = 0;     // Time accumulator for speed increases
+let isClearingBoard = false;
 
 // Mechanic toggles coming from the controller
 let widerPaddleActive = false; // false: paddle 2 units; true: 4 units
@@ -139,8 +140,8 @@ function gameLoopBreakout(timestamp) {
 
 // --- Update Logic ---
 function updateBreakout(deltaTime) {
-    // Paddle movement: Lerp the paddle's x toward targetX (at 6 arcade units/sec).
-    const paddleLerpSpeed = 8;
+    // Paddle movement: Lerp the paddle's x toward targetX (at 10 arcade units/sec).
+    const paddleLerpSpeed = 10;
     let diff = breakoutPaddle.targetX - breakoutPaddle.x;
     let step = paddleLerpSpeed * deltaTime;
     if (Math.abs(diff) <= step) {
@@ -224,7 +225,7 @@ function updateBreakout(deltaTime) {
             ) {
                 // Brick hit: remove brick, award points, and bounce ball.
                 brick.exists = false;
-                arcadeState.currentScore += 10;
+                arcadeState.currentScore += 30;
                 if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
                 console.log("Sound: brick break");
 
@@ -256,20 +257,30 @@ function updateBreakout(deltaTime) {
 
     // Board clear check: if all bricks are gone.
     let remainingBricks = bricks.filter(b => b.exists);
-    if (remainingBricks.length === 0) {
-        // Board cleared: store ball count, clear balls, respawn bricks,
-        // then respawn balls one every 0.1 sec.
-        let ballCount = breakoutBalls.length;
+    if (remainingBricks.length === 0 && !isClearingBoard) {
+        isClearingBoard = true; // Prevent the game over check from triggering.
+        // Optionally, if you want to preserve the ball count, or always spawn at least one ball:
+        let ballCount = breakoutBalls.length || 1;
+        // Clear balls immediately.
         breakoutBalls = [];
+        // Reinitialize bricks.
         initBricks();
+        // Schedule ball respawn—staggered by 100ms each.
         for (let i = 0; i < ballCount; i++) {
-            setTimeout(spawnBall, i * 100);
+            setTimeout(() => {
+                spawnBall();
+                // Once the last ball is spawned, clear the flag.
+                if (i === ballCount - 1) {
+                    isClearingBoard = false;
+                }
+            }, i * 100);
         }
         console.log("Sound: board cleared");
+        // Exit early to avoid falling into the game over check below.
+        return;
     }
-
-    // Game Over check: if no balls remain.
-    if (breakoutBalls.length === 0) {
+    // Game Over check: only trigger if not in board-clearing mode.
+    if (breakoutBalls.length === 0 && !isClearingBoard) {
         gameOver(() => { initBreakout(); });
     }
 }

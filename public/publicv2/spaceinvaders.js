@@ -5,7 +5,7 @@
  * 
  * Controls:
  * - The spaceship moves horizontally (lerps toward the tapped x).
- * - Tapping fires a bullet from the center (or three bullets if tripleShot is enabled).
+ * - Tapping fires a bullet from the center (or three bullets if doubleShot is enabled).
  * 
  * Spaceship:
  * - 1x1 arcade unit.
@@ -27,21 +27,20 @@
  * Bullets:
  * - Player bullets travel upward at 10 units/sec.
  *   Only one allowed at a time (unless infiniteShooting is enabled).
- *   With tripleShot enabled, three bullets fire simultaneously.
+ *   With doubleShot enabled, two bullets fire simultaneously.
  * - Enemy bullets now fire straight downward at 3 units/sec.
  *   At each firing interval, a random grid position in the enemy formation is chosen.
  *   If the enemy at that position is alive, it fires a bullet straight down.
  * 
  * Collisions:
  * - A player bullet hitting an enemy destroys it and awards points.
- *   Points per enemy = 20 + (formationBonus × 10), where formationBonus starts at 0.
+ *   Points per enemy = 20.
  * - A player bullet hitting a shield (if friendlyFire is off) reduces its health by 1.
  * - An enemy bullet or enemy colliding with the spaceship triggers game over.
  * - Enemy collisions with shields also damage the shields.
  * 
  * Respawn:
  * - When all enemies are defeated, the enemy formation and shields respawn.
- * - Additionally, formationBonus is incremented so that subsequent enemy kills are worth 10 extra points each.
  * 
  * Globals:
  *   Assumes arcadeCore.js provides a global object "arcadeState" with:
@@ -84,11 +83,8 @@ let shields = [];
 
 // Host mechanics toggles
 let infiniteShooting = false;
-let tripleShot = false;
+let doubleShot = false;
 let friendlyFire = false;
-
-// Formation bonus: each formation beyond the first increases enemy kill value by 10 points.
-let formationBonus = 0;
 
 // --- Initialization Functions ---
 
@@ -139,11 +135,11 @@ function initShields() {
 
 // --- Bullet Firing Functions ---
 
-// Fires a player bullet (or triple shot) from the spaceship.
+// Fires a player bullet (or double shot) from the spaceship.
 function firePlayerBullet() {
   if (!infiniteShooting && playerBullets.length > 0) return;
-  if (tripleShot) {
-    let offsets = [0.2, 0.5, 0.8];
+  if (doubleShot) {
+    let offsets = [0.2, 0.8];
     offsets.forEach(offset => {
       let bullet = {
         x: spaceship.x + offset - 0.05,
@@ -154,7 +150,7 @@ function firePlayerBullet() {
       };
       playerBullets.push(bullet);
     });
-    console.log("Sound: triple shot fire");
+    console.log("Sound: double shot fire");
   } else {
     let bullet = {
       x: spaceship.x + 0.5 - 0.05,
@@ -277,9 +273,9 @@ function updateSpaceInvaders(deltaTime) {
   
   // Increase enemy group speed every 10 seconds (10% increase).
   enemySpeedTimer += deltaTime;
-  if (enemySpeedTimer >= 10) {
+  if (enemySpeedTimer >= 5) {
     enemyGroup.speed *= 1.1;
-    enemySpeedTimer -= 10;
+    enemySpeedTimer -= 5;
     console.log("Sound: enemy speed increased");
   }
   
@@ -306,8 +302,7 @@ function updateSpaceInvaders(deltaTime) {
       if (enemy.alive && checkCollision(bullet, enemy)) {
         enemy.alive = false;
         playerBullets.splice(i, 1);
-        // Award points: 20 + (formationBonus * 10)
-        arcadeState.currentScore += 20 + (formationBonus * 10);
+        arcadeState.currentScore += 20;
         console.log("Sound: enemy destroyed");
       }
     });
@@ -380,13 +375,12 @@ function updateSpaceInvaders(deltaTime) {
   // Remove shields that have no health.
   shields = shields.filter(shield => shield.health > 0);
   
-  // When all enemies are cleared, respawn them and increment formationBonus.
+  // When all enemies are cleared, respawn them.
   if (enemies.filter(e => e.alive).length === 0) {
-    formationBonus++; // Increase bonus for subsequent formations.
+    playerBullets = [];
     initEnemies();
     initShields();
     console.log("Sound: enemy formation respawned");
-    // Update score display in case formationBonus affects future score.
     if (arcadeState.scoreElement) {
       arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
     }
@@ -440,8 +434,6 @@ function renderSpaceInvaders() {
     arcadeState.ctx.fillText(shield.health, shield.x * cellW + 2, (shield.y + shield.height / 2) * cellH);
     arcadeState.ctx.fillStyle = "blue";
   });
-  
-  // Score display is handled globally by arcadeCore.
 }
 
 // --- Game Loop ---
@@ -461,7 +453,6 @@ function initSpaceInvaders() {
   // Reset global game state.
   arcadeState.isGameOver = false;
   arcadeState.currentScore = 0;
-  formationBonus = 0;
   
   // Initialize spaceship, enemies, and shields.
   initSpaceship();
@@ -512,9 +503,9 @@ function listenToSpaceInvadersMechanics() {
   ref.on('value', snap => {
     const val = snap.val() || {};
     infiniteShooting = !!val.infiniteShooting;
-    tripleShot = !!val.tripleShot;
+    doubleShot = !!val.doubleShot;
     friendlyFire = !!val.friendlyFire;
-    console.log("Space Invaders mechanics updated:", { infiniteShooting, tripleShot, friendlyFire });
+    console.log("Space Invaders mechanics updated:", { infiniteShooting, doubleShot: doubleShot, friendlyFire });
   });
 }
 

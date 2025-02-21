@@ -41,11 +41,17 @@
       background-color: #777;
     }
 
+    /* Active state: highlighted blue */
+    .active {
+      background-color: blue !important;
+    }
+
     h1,
     h2 {
       text-align: center;
     }
   </style>
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 
   <!-- Firebase (compat) libraries -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -80,7 +86,10 @@
     function setCurrentGame(gameName) {
       if (!db) return;
       db.ref('currentGame').set(gameName)
-        .then(() => console.log("Set currentGame to", gameName))
+        .then(() => {
+          console.log("Set currentGame to", gameName);
+          updateGameSelection();
+        })
         .catch(err => console.error("Error:", err));
     }
 
@@ -89,6 +98,22 @@
       db.ref('currentGame').on('value', snapshot => {
         currentGame = snapshot.val() || '';
         updateMechanicsVisibility();
+        updateGameSelection();
+      });
+    }
+
+    // Highlight the selected game button blue.
+    function updateGameSelection() {
+      const games = ['testgame', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
+      games.forEach(game => {
+        const btn = document.getElementById('game-' + game);
+        if (btn) {
+          if (currentGame === game) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
       });
     }
 
@@ -105,6 +130,15 @@
       runnerPanel.style.display = (currentGame === 'runner') ? 'block' : 'none';
     }
 
+    // Generic helper to update mechanic button state based on Firebase value.
+    function setMechanicButtonState(mechanicPath, buttonId) {
+      if (!db) return;
+      db.ref(mechanicPath).once('value').then(snap => {
+        const val = snap.val() || false;
+        document.getElementById(buttonId).classList.toggle('active', val);
+      });
+    }
+
     // --- Frogger Mechanics Toggles ---
     function toggleLongerLogs() {
       if (!db) return;
@@ -112,7 +146,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled longerLogs to", !currentVal))
+          .then(() => {
+            console.log("Toggled longerLogs to", !currentVal);
+            setMechanicButtonState('mechanics/frogger/longerLogs', 'btn-longerLogs');
+          })
           .catch(err => console.error("Error toggling longerLogs:", err));
       });
     }
@@ -123,7 +160,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled slowCars to", !currentVal))
+          .then(() => {
+            console.log("Toggled slowCars to", !currentVal);
+            setMechanicButtonState('mechanics/frogger/slowCars', 'btn-slowCars');
+          })
           .catch(err => console.error("Error toggling slowCars:", err));
       });
     }
@@ -134,7 +174,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled verticalCenterMode to", !currentVal))
+          .then(() => {
+            console.log("Toggled verticalCenterMode to", !currentVal);
+            setMechanicButtonState('mechanics/frogger/verticalCenterMode', 'btn-verticalCenterMode');
+          })
           .catch(err => console.error("Error toggling verticalCenterMode:", err));
       });
     }
@@ -144,7 +187,10 @@
       if (!db) return;
       const ref = db.ref('mechanics/breakout/addBall');
       ref.set(true)
-        .then(() => console.log("Triggered addBall mechanic"))
+        .then(() => {
+          console.log("Triggered addBall mechanic");
+          setMechanicButtonState('mechanics/breakout/addBall', 'btn-addBall');
+        })
         .catch(err => console.error("Error triggering addBall:", err));
     }
 
@@ -154,7 +200,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled widerPaddle to", !currentVal))
+          .then(() => {
+            console.log("Toggled widerPaddle to", !currentVal);
+            setMechanicButtonState('mechanics/breakout/widerPaddle', 'btn-widerPaddle');
+          })
           .catch(err => console.error("Error toggling widerPaddle:", err));
       });
     }
@@ -165,7 +214,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled largerBalls to", !currentVal))
+          .then(() => {
+            console.log("Toggled largerBalls to", !currentVal);
+            setMechanicButtonState('mechanics/breakout/largerBalls', 'btn-largerBalls');
+          })
           .catch(err => console.error("Error toggling largerBalls:", err));
       });
     }
@@ -177,19 +229,25 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled infiniteShooting to", !currentVal))
+          .then(() => {
+            console.log("Toggled infiniteShooting to", !currentVal);
+            setMechanicButtonState('mechanics/spaceinvaders/infiniteShooting', 'btn-infiniteShooting');
+          })
           .catch(err => console.error("Error toggling infiniteShooting:", err));
       });
     }
 
-    function toggleTripleShot() {
+    function toggleDoubleShot() {
       if (!db) return;
-      const ref = db.ref('mechanics/spaceinvaders/tripleShot');
+      const ref = db.ref('mechanics/spaceinvaders/doubleShot');
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled tripleShot to", !currentVal))
-          .catch(err => console.error("Error toggling tripleShot:", err));
+          .then(() => {
+            console.log("Toggled doubleShot to", !currentVal);
+            setMechanicButtonState('mechanics/spaceinvaders/doubleShot', 'btn-doubleShot');
+          })
+          .catch(err => console.error("Error toggling doubleShot:", err));
       });
     }
 
@@ -199,7 +257,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled friendlyFire to", !currentVal))
+          .then(() => {
+            console.log("Toggled friendlyFire to", !currentVal);
+            setMechanicButtonState('mechanics/spaceinvaders/friendlyFire', 'btn-friendlyFire');
+          })
           .catch(err => console.error("Error toggling friendlyFire:", err));
       });
     }
@@ -211,7 +272,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled doubleJump to", !currentVal))
+          .then(() => {
+            console.log("Toggled doubleJump to", !currentVal);
+            setMechanicButtonState('mechanics/runner/doubleJump', 'btn-doubleJump');
+          })
           .catch(err => console.error("Error toggling doubleJump:", err));
       });
     }
@@ -222,7 +286,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled bridges to", !currentVal))
+          .then(() => {
+            console.log("Toggled bridges to", !currentVal);
+            setMechanicButtonState('mechanics/runner/bridges', 'btn-bridges');
+          })
           .catch(err => console.error("Error toggling bridges:", err));
       });
     }
@@ -233,7 +300,10 @@
       ref.once('value').then(snap => {
         const currentVal = snap.val() || false;
         ref.set(!currentVal)
-          .then(() => console.log("Toggled coins to", !currentVal))
+          .then(() => {
+            console.log("Toggled coins to", !currentVal);
+            setMechanicButtonState('mechanics/runner/coins', 'btn-coins');
+          })
           .catch(err => console.error("Error toggling coins:", err));
       });
     }
@@ -245,41 +315,41 @@
   <div id="container">
     <!-- LEFT COLUMN: List of Games -->
     <div class="column">
-      <button onclick="setCurrentGame('testgame')">Test Game</button>
-      <button onclick="setCurrentGame('frogger')">Frogger</button>
-      <button onclick="setCurrentGame('breakout')">Breakout</button>
-      <button onclick="setCurrentGame('runner')">Runner</button>
-      <button onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
+      <button id="game-testgame" onclick="setCurrentGame('testgame')">Test Game</button>
+      <button id="game-frogger" onclick="setCurrentGame('frogger')">Frogger</button>
+      <button id="game-breakout" onclick="setCurrentGame('breakout')">Breakout</button>
+      <button id="game-runner" onclick="setCurrentGame('runner')">Runner</button>
+      <button id="game-spaceinvaders" onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
     </div>
     <!-- RIGHT COLUMN: Mechanics Panels -->
     <div class="column" id="mechanicsPanel">
       <!-- Frogger Mechanics -->
       <div id="froggerMechanics" style="display: none;">
         <h2>Frogger Mechanics</h2>
-        <button onclick="toggleLongerLogs()">Toggle Longer Logs</button>
-        <button onclick="toggleSlowCars()">Toggle Slow Cars</button>
-        <button onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
+        <button id="btn-longerLogs" onclick="toggleLongerLogs()">Toggle Longer Logs</button>
+        <button id="btn-slowCars" onclick="toggleSlowCars()">Toggle Slow Cars</button>
+        <button id="btn-verticalCenterMode" onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
       </div>
       <!-- Breakout Mechanics -->
       <div id="breakoutMechanics" style="display: none;">
         <h2>Breakout Mechanics</h2>
-        <button onclick="toggleAddBall()">Add Ball</button>
-        <button onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
-        <button onclick="toggleLargerBalls()">Toggle Larger Balls</button>
+        <button id="btn-addBall" onclick="toggleAddBall()">Add Ball</button>
+        <button id="btn-widerPaddle" onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
+        <button id="btn-largerBalls" onclick="toggleLargerBalls()">Toggle Larger Balls</button>
       </div>
       <!-- Space Invaders Mechanics -->
       <div id="spaceinvadersMechanics" style="display: none;">
         <h2>Space Invaders Mechanics</h2>
-        <button onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
-        <button onclick="toggleTripleShot()">Toggle Triple Shot</button>
-        <button onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
+        <button id="btn-infiniteShooting" onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
+        <button id="btn-doubleShot" onclick="toggleDoubleShot()">Toggle Double Shot</button>
+        <button id="btn-friendlyFire" onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
       </div>
       <!-- Runner Mechanics -->
       <div id="runnerMechanics" style="display: none;">
         <h2>Runner Mechanics</h2>
-        <button onclick="toggleDoubleJump()">Toggle Double Jump</button>
-        <button onclick="toggleBridges()">Toggle Bridges</button>
-        <button onclick="toggleCoins()">Toggle Coins</button>
+        <button id="btn-doubleJump" onclick="toggleDoubleJump()">Toggle Double Jump</button>
+        <button id="btn-bridges" onclick="toggleBridges()">Toggle Bridges</button>
+        <button id="btn-coins" onclick="toggleCoins()">Toggle Coins</button>
       </div>
     </div>
   </div>
