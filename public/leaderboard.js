@@ -1,148 +1,123 @@
-// Fetch the Firebase API key and configuration from the backend
-fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
+let db;
+let currentGame = "testgame"; // Default if not set by host.
+const refreshInterval = 1000; // Refresh every 1000ms (1 second).
+
+// Initialize Firebase when DOM is ready.
+document.addEventListener('DOMContentLoaded', initFirebase);
+
+function initFirebase() {
+  fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
     .then(response => response.json())
     .then(data => {
-        // Initialize Firebase with the config that includes the dynamic API key
-        const firebaseConfig = {
-            apiKey: data.apiKey,
-            authDomain: "summit-games-a1f9f.firebaseapp.com",
-            databaseURL: "https://summit-games-a1f9f-default-rtdb.firebaseio.com/",
-            projectId: "summit-games-a1f9f",
-            storageBucket: "summit-games-a1f9f.appspot.com",
-            messagingSenderId: "441105165656",
-            appId: "1:441105165656:web:277897c92f13365a98092d"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-
-        // After Firebase has been initialized, display the leaderboard
-        listenForGameChanges(db);
+      const firebaseConfig = {
+        apiKey: data.apiKey,
+        authDomain: "summit-games-a1f9f.firebaseapp.com",
+        databaseURL: "https://summit-games-a1f9f-default-rtdb.firebaseio.com/",
+        projectId: "summit-games-a1f9f",
+        storageBucket: "summit-games-a1f9f.appspot.com",
+        messagingSenderId: "441105165656",
+        appId: "1:441105165656:web:277897c92f13365a98092d"
+      };
+      firebase.initializeApp(firebaseConfig);
+      db = firebase.database();
+      listenForGameChanges();
+      // Start periodic refresh.
+      setInterval(updateLeaderboard, refreshInterval);
     })
     .catch(error => {
-        console.error('Error fetching the API key:', error);
-    });
-
-// Flag to check if initial data has been loaded
-let initialDataLoaded = false;
-
-// Function to retrieve and update the leaderboard for the current game
-function updateLeaderboard(currentGame, db) {
-    const leaderboardTitle = document.getElementById('leaderboardTitle');
-    const leaderboardList = document.getElementById('leaderboardList');
-
-    leaderboardTitle.innerText = currentGame.charAt(0).toUpperCase() + currentGame.slice(1);
-
-    // Fetch all users and their scores for the current game
-    db.ref('attendees').on('value', (snapshot) => {
-        const attendees = snapshot.val();
-        const scores = [];
-
-        // Loop through attendees and get scores for the current game
-        for (let key in attendees) {
-            if (attendees.hasOwnProperty(key)) {
-                const user = attendees[key];
-                scores.push({ name: user.name, score: user[currentGame] || 0 });
-            }
-        }
-
-        // Sort the scores in descending order
-        scores.sort((a, b) => b.score - a.score);
-
-        // Clear existing leaderboard
-        leaderboardList.innerHTML = '';
-
-        // Initialize variables for rank calculation
-        let currentRank = 0;
-        let prevScore = null;
-        let playersProcessed = 0;
-
-        // Display sorted scores on the leaderboard
-        scores.forEach((user, index) => {
-            // Increment rank only if the current score is less than the previous score
-            if (user.score !== prevScore) {
-                currentRank = playersProcessed + 1;
-            }
-            prevScore = user.score;
-            playersProcessed++;
-
-            const li = document.createElement('li');
-
-            // Create span for rank
-            const rankSpan = document.createElement('span');
-            rankSpan.textContent = currentRank < 10 ? `${currentRank}. ` : `${currentRank}.`;
-            rankSpan.classList.add('rank');
-
-            // Create span for name
-            const nameSpan = document.createElement('span');
-            nameSpan.textContent = user.name;
-            nameSpan.classList.add('name');
-
-            // Create span for score
-            const scoreSpan = document.createElement('span');
-            scoreSpan.textContent = `${user.score}`;
-            scoreSpan.classList.add('score');
-
-            // Append spans to li
-            li.appendChild(rankSpan);
-            li.appendChild(nameSpan);
-            li.appendChild(scoreSpan);
-
-            // Apply colors based on position (index + 1)
-            const position = index + 1;
-            if (position <= 20) {
-                const color = getColorGradient(position);
-                nameSpan.style.color = color;
-                rankSpan.style.color = color;
-                scoreSpan.style.color = color;
-            } else {
-                // Set colors to the same red as rank 20
-                const color = getColorGradient(20);
-                nameSpan.style.color = color;
-                rankSpan.style.color = color;
-                scoreSpan.style.color = color;
-            }
-
-            leaderboardList.appendChild(li);
-        });
-
-        // After updating the leaderboard, hide the loading screen on first data load
-        if (!initialDataLoaded) {
-            // Hide the loading screen
-            const loadingScreen = document.getElementById('loadingScreen');
-            loadingScreen.style.display = 'none';
-
-            // Show the main content
-            const content = document.getElementById('content');
-            content.style.display = 'block';
-
-            initialDataLoaded = true;
-        }
+      console.error('Error fetching the API key:', error);
     });
 }
 
-// Function to generate a gradient from bright yellow to red
-function getColorGradient(position) {
-    const maxPosition = 20; // Positions to apply the gradient
-    const startHue = 60; // Hue for bright yellow
-    const endHue = 0;    // Hue for red
-    const saturation = 100; // Keep saturation constant at 100%
-    const lightness = 50;   // Keep lightness constant at 50%
-
-    // Calculate the ratio based on the position
-    const ratio = (position - 1) / (maxPosition - 1);
-
-    // Interpolate the hue
-    const hue = startHue - (startHue - endHue) * ratio;
-
-    // Return the HSL color string
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+// Listen for changes to the current game.
+function listenForGameChanges() {
+  db.ref('currentGame').on('value', snapshot => {
+    const game = snapshot.val();
+    if (game) {
+      currentGame = game;
+      document.getElementById('leaderboardTitle').innerText = capitalize(game);
+      updateLeaderboard(); // Immediate update on game change.
+    }
+  });
 }
 
-// Listen for real-time changes to the current game and update the leaderboard
-function listenForGameChanges(db) {
-    const gameRef = db.ref('currentGame');
-    gameRef.on('value', (snapshot) => {
-        const currentGame = snapshot.val();
-        updateLeaderboard(currentGame, db);  // Update leaderboard for the current game
+// Update the leaderboard by querying Firebase for attendees.
+function updateLeaderboard() {
+  db.ref('attendees').once('value')
+    .then(snapshot => {
+      const attendees = snapshot.val();
+      const scores = [];
+
+      // Loop through attendees and build an array of { name, score } objects.
+      for (let key in attendees) {
+        if (attendees.hasOwnProperty(key)) {
+          const user = attendees[key];
+          let score = parseFloat(user[currentGame]);
+          if (isNaN(score)) score = 0;
+          // Only include non-zero scores.
+          if (score > 0) {
+            scores.push({ name: user.name, score });
+          }
+        }
+      }
+
+      // Sort scores in descending order.
+      scores.sort((a, b) => b.score - a.score);
+
+      // Determine the highest score for the gradient.
+      let highestScore = scores.length > 0 ? scores[0].score : 0;
+
+      // Build the leaderboard list with ranking (ties get same rank).
+      const leaderboardList = document.getElementById('leaderboardList');
+      leaderboardList.innerHTML = '';
+      let currentRank = 0;
+      let previousScore = null;
+      let playersProcessed = 0;
+
+      scores.forEach(user => {
+        if (user.score !== previousScore) {
+          currentRank = playersProcessed + 1;
+        }
+        previousScore = user.score;
+        playersProcessed++;
+
+        const li = document.createElement('li');
+
+        // Create rank span.
+        const rankSpan = document.createElement('span');
+        rankSpan.classList.add('rank');
+        rankSpan.textContent = currentRank + '. ';
+
+        // Create name span.
+        const nameSpan = document.createElement('span');
+        nameSpan.classList.add('name');
+        nameSpan.textContent = user.name;
+
+        // Create score span.
+        const scoreSpan = document.createElement('span');
+        scoreSpan.classList.add('score');
+        scoreSpan.textContent = user.score;
+
+        // Calculate the gradient color.
+        // highestScore => yellow (hue 60), 0 => red (hue 0).
+        let hue = highestScore > 0 ? (user.score / highestScore) * 60 : 0;
+        const color = `hsl(${hue}, 100%, 50%)`;
+        rankSpan.style.color = color;
+        nameSpan.style.color = color;
+        scoreSpan.style.color = color;
+
+        li.appendChild(rankSpan);
+        li.appendChild(nameSpan);
+        li.appendChild(scoreSpan);
+        leaderboardList.appendChild(li);
+      });
+    })
+    .catch(error => {
+      console.error('Error updating leaderboard:', error);
     });
+}
+
+function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
 }

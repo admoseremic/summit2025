@@ -1,59 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <!-- Meta and Title -->
-    <meta charset="UTF-8">
-    <!-- Prevent zooming and ensure proper scaling -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Summit Arcade</title>
-
-    <!-- Firebase libraries -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" defer></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js" defer></script>
-
-    <!-- Your JavaScript files -->
-    <script src="app.js" defer></script>
-    <script src="breakout.js" defer></script>
-    <script src="runner.js" defer></script>
-    <script src="frogger.js" defer></script>
-    <script src="spaceinvaders.js" defer></script>
-    <script src="commoncomponents.js" defer></script>
-
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Summit Arcade</title>
+  <link rel="stylesheet" href="styles.css">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+  <!-- Firebase (compat) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+  
+  <!-- Now load your modules with type="module" -->
+  <script type="module" src="arcadeCore.js"></script>
+  <!-- If your games are loaded via arcadeCore.js’s imports, you may not need to list them here.
+       Otherwise, list them in the proper order. -->
 </head>
-<body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen">
-        <span>Loading...</span>
-    </div>
-
-    <!-- Main Content (Initially Hidden) -->
-    <div id="content">
-        <!-- Name Input Modal -->
-        <div id="nameModal">
-            <div class="modal-content">
-                <h2>Enter Your Name</h2>
-                <form id="nameForm">
-                    <input type="text" id="username" placeholder="YOUR NAME" maxlength="12" required>
-                    <button type="submit">START GAME</button>
-                </form>
-            </div>
-        </div>
-
-        <!-- Header Section -->
-        <div id="header">
-            <span id="userName"></span>
-            <span id="totalPoints">0</span>
-        </div>
-
-        <!-- Game Container -->
-        <div id="gameContainer">
-            <h3 id="gameTitle">Select a game to play...</h3>
-            <div id="gameContent"></div>
-        </div>
-    </div>
+<body onload="initArcade()">
+  <div id="content">
+    <div id="gameContent" style="position: relative; width: 100%; height: 100%; background: black;"></div>
+  </div>
 </body>
 </html>

@@ -45,26 +45,23 @@ function gameOver(restartCallback) {
   arcadeState.isGameOver = true;
   stopGame();
 
-  // Check if new high score
-  if (arcadeState.username && arcadeState.currentScore > arcadeState.highScore) {
-    const userRef = arcadeState.db.ref('attendees');
-    userRef.orderByChild('name').equalTo(arcadeState.username).once('value', snapshot => {
-      if (snapshot.exists()) {
-        let userData = snapshot.val();
-        let userId = Object.keys(userData)[0];
-        let updates = {};
-        updates[`/attendees/${userId}/${arcadeState.game}`] = arcadeState.currentScore;
-        arcadeState.db.ref().update(updates);
-      }
-    });
+  // Use greater-than-or-equal-to check for ties
+  if (arcadeState.username && arcadeState.userId && arcadeState.currentScore >= arcadeState.highScore) {
+    arcadeState.db.ref(`attendees/${arcadeState.userId}/${arcadeState.game}`)
+      .set(arcadeState.currentScore)
+      .then(() => {
+        arcadeState.highScore = arcadeState.currentScore;
+        localStorage.setItem('highScore_' + arcadeState.game, arcadeState.highScore);
+      })
+      .catch(err => console.error('Error updating high score:', err));
   }
-  // Clear canvas and show "Game Over"
+
   arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
   arcadeState.ctx.fillStyle = 'white';
   arcadeState.ctx.font = '40px "Press Start 2P"';
   arcadeState.ctx.textAlign = 'center';
   arcadeState.ctx.fillText('Game Over', arcadeState.canvas.width / 2, arcadeState.canvas.height / 2 - 20);
-  // Retro-themed "Try Again" button
+
   const tryAgainButton = document.createElement('button');
   tryAgainButton.id = 'tryagain';
   tryAgainButton.innerText = 'Try Again';
@@ -83,7 +80,6 @@ function gameOver(restartCallback) {
     zIndex: 9999
   });
 
-  // On click, remove button and call the restart callback (skipping the title screen)
   tryAgainButton.onclick = () => {
     document.body.removeChild(tryAgainButton);
     restartCallback();
@@ -101,7 +97,8 @@ export function loadGame(gameName) {
   clearGame();
   // Reset common state.
   arcadeState.currentScore = 0;
-  arcadeState.highScore = 0;
+  const storedHigh = localStorage.getItem('highScore_' + gameName);
+  arcadeState.highScore = storedHigh ? parseInt(storedHigh, 10) : 0;
   arcadeState.isGameOver = false;
   arcadeState.game = gameName;
 
@@ -315,17 +312,6 @@ function styleScoreElement(el) {
  * Initialize Arcade (Called on page load)
  *************************************************************/
 function initArcade() {
-  const storedUsername = localStorage.getItem('username');
-  if (!storedUsername) {
-    promptForUsername(() => {
-      // Once a username is entered, re-call initArcade.
-      initArcade();
-    });
-    return; // Stop here until the username is provided.
-  }
-  // Set the username in your arcade state.
-  arcadeState.username = storedUsername;
-  // Initialize Firebase
   fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
     .then(resp => resp.json())
     .then(data => {
@@ -341,11 +327,40 @@ function initArcade() {
       firebase.initializeApp(config);
       arcadeState.db = firebase.database();
 
-      setupCanvas();
-      createScoreboardElements();
-
-      // Listen for "currentGame" changes
-      listenForGameChanges();
+      // Check for stored user ID and username
+      let storedUserId = localStorage.getItem('userId');
+      let storedUsername = localStorage.getItem('username');
+      if (!storedUserId || !storedUsername) {
+        // Prompt for username if missing
+        promptForUsername((name) => {
+          // Create a new attendee entry in Firebase
+          let newUserRef = arcadeState.db.ref('attendees').push();
+          newUserRef.set({
+            name: name,
+            breakout: 0,
+            runner: 0,
+            spaceinvaders: 0,
+            frogger: 0
+          })
+            .then(() => {
+              localStorage.setItem('userId', newUserRef.key);
+              localStorage.setItem('username', name);
+              arcadeState.username = name;
+              arcadeState.userId = newUserRef.key;
+              // Proceed with the rest of initialization
+              setupCanvas();
+              createScoreboardElements();
+              listenForGameChanges();
+            })
+            .catch(error => console.error('Error creating attendee entry:', error));
+        });
+      } else {
+        arcadeState.username = storedUsername;
+        arcadeState.userId = storedUserId;
+        setupCanvas();
+        createScoreboardElements();
+        listenForGameChanges();
+      }
     })
     .catch(err => console.error("Error fetching Firebase config:", err));
 }
@@ -413,7 +428,6 @@ function hideTitleScreen() {
 }
 
 function promptForUsername(callback) {
-  // Create a full-screen overlay.
   const overlay = document.createElement('div');
   overlay.id = 'usernameOverlay';
   Object.assign(overlay.style, {
@@ -430,7 +444,6 @@ function promptForUsername(callback) {
     zIndex: 10000
   });
 
-  // Create a prompt label.
   const label = document.createElement('label');
   label.innerText = "Enter your username to play:";
   label.style.color = 'white';
@@ -439,19 +452,19 @@ function promptForUsername(callback) {
   label.style.marginBottom = '20px';
   overlay.appendChild(label);
 
-  // Create the input field.
   const input = document.createElement('input');
   input.type = 'text';
-  input.style.fontSize = '16px';
-  input.style.padding = '10px';
-  input.style.border = '2px solid white';
-  input.style.backgroundColor = '#333';
-  input.style.color = 'white';
-  input.style.fontFamily = '"Press Start 2P", sans-serif';
-  input.style.textAlign = 'center';
+  Object.assign(input.style, {
+    fontSize: '16px',
+    padding: '10px',
+    border: '2px solid white',
+    backgroundColor: '#333',
+    color: 'white',
+    fontFamily: '"Press Start 2P", sans-serif',
+    textAlign: 'center'
+  });
   overlay.appendChild(input);
 
-  // Create the submit button.
   const button = document.createElement('button');
   button.innerText = "Submit";
   Object.assign(button.style, {
@@ -466,19 +479,16 @@ function promptForUsername(callback) {
   });
   overlay.appendChild(button);
 
-  // When the button is clicked, validate the input.
   button.addEventListener('click', () => {
-    const username = input.value.trim();
-    if (username) {
-      localStorage.setItem('username', username);
+    const name = input.value.trim();
+    if (name) {
       document.body.removeChild(overlay);
-      if (callback) callback(username);
+      callback(name);
     } else {
       alert("Please enter a valid username.");
     }
   });
 
-  // Optionally, allow the Enter key to submit.
   input.addEventListener('keyup', (e) => {
     if (e.key === "Enter") {
       button.click();
