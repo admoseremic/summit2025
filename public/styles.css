@@ -42,7 +42,7 @@ body {
 
 /* Leaderboard title styling */
 #leaderboardTitle {
-  font-size: 2em;
+  font-size: 3em;
   text-align: center;
   margin-bottom: 20px;
 }
@@ -70,6 +70,7 @@ body {
   margin-bottom: 5px;
   background: #111;
   border-radius: 4px;
+  font-size: 2em;
 }
 
 /* Rank, name, and score spans */
