@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer Journey Analytics Tips and Tricks 2025</title>
+  
+  <!-- Google Fonts: Press Start 2P -->
+  <link 
+    href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" 
+    rel="stylesheet"
+  >
+  
+  <style>
+    /* Basic Reset */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #1a1a1a; 
+      color: #fff;
+      font-family: 'Press Start 2P', monospace;
+      padding: 20px;
+    }
+
+    h1, h2, h3 {
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      font-size: 1.5rem;
+    }
+
+    /* Retro Banner Image */
+    .banner-img {
+        display: block;
+        margin: 0 auto 40px auto;
+        max-width: 50%; /* Shrink from 100% to 60% */
+        height: auto;
+    }
+
+    /* Table of Contents */
+    .toc {
+      margin: 0 auto 40px auto;
+      max-width: 800px;
+      text-align: left;
+    }
+    .toc h2 {
+      font-size: 1.2rem;
+      margin-bottom: 10px;
+    }
+    .toc ul {
+      list-style: none;
+      display: inline-block;
+    }
+    .toc li {
+      margin: 5px 0;
+    }
+    /* TOC links (unchanged) */
+    .toc a {
+      text-decoration: none;
+      color: #00ffcc; 
+      transition: color 0.3s;
+    }
+    .toc a:hover {
+      color: #ff00ff; 
+    }
+
+    /* Tip Container */
+    .tip-container {
+      display: flex;
+      flex-wrap: wrap;
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #333;
+      border-radius: 0; /* square corners */
+      overflow: hidden;
+    }
+
+    .tip-text, .tip-video {
+      flex: 1 1 100%;
+      padding: 20px;
+    }
+    @media (min-width: 768px) {
+      .tip-text {
+        flex: 1 1 50%;
+      }
+      .tip-video {
+        flex: 1 1 50%;
+      }
+    }
+
+    .tip-text h3 {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+    }
+    .tip-text p {
+      font-size: 0.8rem;
+      line-height: 1.4;
+    }
+
+    /* Tip-description links: more readable color */
+    .tip-text a {
+      color: #ffcc00; /* easier to read on #333 */
+      text-decoration: none;
+      border-bottom: 1px dotted #ffcc00; /* optional retro style */
+      transition: color 0.3s;
+    }
+    .tip-text a:hover {
+      color: #ff00ff;
+    }
+
+    /* Video styling */
+    video {
+      width: 100%;
+      max-height: 400px;
+      border: 2px solid #00ffcc;
+      border-radius: 0; /* square corners */
+      outline: none;
+    }
+
+    /* Spacing between tips */
+    .tip-container + .tip-container {
+      margin-top: 20px;
+    }
+
+    /* Smooth scroll for anchor links */
+    html {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body>
+  <!-- Page Title -->
+  <h1>Customer Journey Analytics Tips and Tricks 2025</h1>
+  <!-- Retro Graphic -->
+  <img src="videos/arcade_characters.png" alt="Arcade Themed Adobe Logos" class="banner-img">
+
+  <!-- (Optional) Table of Contents -->
+  <div class="toc">
+    <h2>Table of Contents</h2>
+    <ul>
+      <li><a href="#tip1">Tip 1: Summary Data Sources</a></li>
+      <li><a href="#tip2">Tip 2: Product Usage Data</a></li>
+      <li><a href="#tip3">Tip 3: Shared Metrics & Dimensions</a></li>
+      <li><a href="#tip4">Tip 4: Create a state change metric</a></li>
+      <li><a href="#tip5">Tip 5: Create a "derived" metric</a></li>
+      <li><a href="#tip6">Tip 6: Create a "pathing" dimension</a></li>
+      <li><a href="#tip7">Tip 7: CJA Upgrade Guide</a></li>
+      <li><a href="#tip8">Tip 8: Smarter Bot Filtering</a></li>
+      <li><a href="#tip9">Tip 9: AI Assistant</a></li>
+      <li><a href="#tip10">Tip 10: Journey Canvas</a></li>
+      <li><a href="#tip11">Tip 11: Guided Analysis</a></li>
+      <li><a href="#tip12">Tip 12: Content Analytics</a></li>
+    </ul>
+  </div>
+
+  <!-- Tip 1 -->
+  <section id="tip1" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 1: Summary Data Sources</h3>
+      <p>
+        Use summary data sources to pull marketing campaign costs, return on ad spend, progress toward a corporate goal, or social performance metrics.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-dataviews/summary-data">Read more about summary data sources here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/summary_data.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 2 -->
+  <section id="tip2" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 2: Product Usage Data</h3>
+      <p>
+        Use Product Usage data to see how many people are using CJA, what your most popular projects are, which dimensions/metrics are used the most, or measure your CJA adoption.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/tools/product-usage/usage-overview">Read more about product usage data here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/product_usage.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 3 -->
+  <section id="tip3" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 3: Shared Metrics & Dimensions</h3>
+      <p>
+        Create metrics and dimensions that can be shared by multiple Data Views at your company.
+        <br><br>
+        Coming soon in April 2025!
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/shared_components.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 4 -->
+  <section id="tip4" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 4: State Change Metric</h3>
+      <p>
+        A state change derived field helps you measure how often users move from “silver” to “gold” and see which marketing channels most contribute to upgrades. You can create a segment of users who have upgraded.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-dataviews/derived-fields">Read more about derived fields here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/df_state_change_metric.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 5 -->
+  <section id="tip5" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 5: Create a "derived" metric</h3>
+      <p>
+        While calculated metrics can't be used in an experiment, segment, funnel, etc. A "derived" metric can be! Create one using the Math function in derived fields.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-dataviews/derived-fields">Read more about derived fields here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/derived_metric.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 6 -->
+  <section id="tip6" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 6: Create a "pathing" dimension</h3>
+      <p>
+        A "pathing" dimension allows you to see the most common paths users take and how they contribute to your key metrics. You can also create segments from specific paths.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-dataviews/derived-fields">Read more about derived fields here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/pathing_dimension.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 7 -->
+  <section id="tip7" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 7: CJA Upgrade Guide</h3>
+      <p>
+        The CJA upgrade guide helps you know where to start with your CJA deployment, how to navigate the transition from Analytics to CJA, and helps you know what to do first!
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/compare-aa-cja/upgrade-to-cja/cja-upgrade-path">Read more about upgrading to CJA here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/dynamic_checklist.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 8 -->
+  <section id="tip8" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 8: Smarter Bot Filtering</h3>
+      <p>
+        How to use SQL/Data Distiller to filter out bots that the automatic bot detection may have missed. Also, speed up the performance of your bot removal segment in reporting!
+        <br><br>
+        <a href="https://drive.google.com/file/d/1XPnsGCRP_8iNoS_Tou8pSiV1IH7U0MM_/view">Download the SQL here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/bot_detection.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 9 -->
+  <section id="tip9" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 9: AI Assistant</h3>
+      <p>
+        The AI Assistant helps you find relevant documents to answer your CJA questions.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-overview/ai-assistant">Read more about the AI Assistant here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/ai_assistant.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 10 -->
+  <section id="tip10" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 10: Journey Canvas</h3>
+      <p>
+        Journey Canvas helps you analyze complex, multi-step funnels, and see how specific journeys are impacting your metrics.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/cja-workspace/visualizations/journey-canvas/journey-canvas">Read more about Journey Canvas here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/journey_canvas.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 11 -->
+  <section id="tip11" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 11: Guided Analysis</h3>
+      <p>
+        Guided Analyses help users who aren’t super familiar with Analysis Workspace. It helps you know what to analyze, such as measuring the impact of a feature release or assessing user churn.
+        <br><br>
+        <a href="https://experienceleague.adobe.com/en/docs/analytics-platform/using/guided-analysis/overview">Read more about Guided Analysis here.</a>
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/guided_analyses.mp4"></video>
+    </div>
+  </section>
+
+  <!-- Tip 12 -->
+  <section id="tip12" class="tip-container">
+    <div class="tip-text">
+      <h3>Tip 12: Content Analytics</h3>
+      <p>
+        Content Analytics helps you see which creative assets are performing best on your site and which attributes of those assets are most compelling.
+        <br><br>
+        Content Analytics is a net new offering for CJA customers.
+      </p>
+    </div>
+    <div class="tip-video">
+      <video controls src="videos/content_analytics.mp4"></video>
+    </div>
+  </section>
+</body>
+</html>
