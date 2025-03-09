@@ -50,18 +50,33 @@
     h2 {
       text-align: center;
     }
+
+    /* Clear leaderboard button styling */
+    #clearAllLeaderboards {
+      background-color: red !important;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    #clearLeaderboardContainer {
+      text-align: center;
+      margin-top: 20px;
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
-
   <!-- Firebase (compat) libraries -->
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
-
   <script>
     let db = null;
     let currentGame = null;
+    let leaderboardGame = null;
 
-    // Initialize Firebase
+    // Initialize Firebase using your cloud function
     fetch('https://us-central1-summit-games-a1f9f.cloudfunctions.net/getApiKey')
       .then(resp => resp.json())
       .then(data => {
@@ -79,32 +94,53 @@
         }
         db = firebase.database();
         listenForCurrentGame();
+        listenForLeaderboardGame();
       })
       .catch(err => console.error('Error fetching Firebase config:', err));
 
-    // Set the current game in Firebase so that all clients switch games.
+    // Set the current game for the game client.
     function setCurrentGame(gameName) {
       if (!db) return;
       db.ref('currentGame').set(gameName)
         .then(() => {
           console.log("Set currentGame to", gameName);
           updateGameSelection();
+          updateMechanicsVisibility();
         })
-        .catch(err => console.error("Error:", err));
+        .catch(err => console.error("Error setting currentGame:", err));
+    }
+
+    // Set the leaderboard game for leaderboard display.
+    function setLeaderboardGame(gameName) {
+      if (!db) return;
+      db.ref('leaderboardGame').set(gameName)
+        .then(() => {
+          console.log("Set leaderboardGame to", gameName);
+          updateLeaderboardGameSelection();
+        })
+        .catch(err => console.error("Error setting leaderboardGame:", err));
     }
 
     // Listen for changes to currentGame.
     function listenForCurrentGame() {
       db.ref('currentGame').on('value', snapshot => {
         currentGame = snapshot.val() || '';
-        updateMechanicsVisibility();
         updateGameSelection();
+        updateMechanicsVisibility();
       });
     }
 
-    // Highlight the selected game button blue.
+    // Listen for changes to leaderboardGame.
+    function listenForLeaderboardGame() {
+      db.ref('leaderboardGame').on('value', snapshot => {
+        leaderboardGame = snapshot.val() || '';
+        updateLeaderboardGameSelection();
+      });
+    }
+
+    // Update button selection for game client.
     function updateGameSelection() {
-      const games = ['testgame', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
+      const games = ['showScore', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
       games.forEach(game => {
         const btn = document.getElementById('game-' + game);
         if (btn) {
@@ -117,29 +153,31 @@
       });
     }
 
-    // Show the appropriate mechanics panel based on the current game.
-    function updateMechanicsVisibility() {
-      const froggerPanel = document.getElementById('froggerMechanics');
-      const breakoutPanel = document.getElementById('breakoutMechanics');
-      const spaceinvadersPanel = document.getElementById('spaceinvadersMechanics');
-      const runnerPanel = document.getElementById('runnerMechanics');
-
-      froggerPanel.style.display = (currentGame === 'frogger') ? 'block' : 'none';
-      breakoutPanel.style.display = (currentGame === 'breakout') ? 'block' : 'none';
-      spaceinvadersPanel.style.display = (currentGame === 'spaceinvaders') ? 'block' : 'none';
-      runnerPanel.style.display = (currentGame === 'runner') ? 'block' : 'none';
-    }
-
-    // Generic helper to update mechanic button state based on Firebase value.
-    function setMechanicButtonState(mechanicPath, buttonId) {
-      if (!db) return;
-      db.ref(mechanicPath).once('value').then(snap => {
-        const val = snap.val() || false;
-        document.getElementById(buttonId).classList.toggle('active', val);
+    // Update button selection for leaderboard.
+    function updateLeaderboardGameSelection() {
+      const games = ['showCumulativeScore', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
+      games.forEach(game => {
+        const btn = document.getElementById('lb-game-' + game);
+        if (btn) {
+          if (leaderboardGame === game) {
+            btn.classList.add('active');
+          } else {
+            btn.classList.remove('active');
+          }
+        }
       });
     }
 
-    // --- Frogger Mechanics Toggles ---
+    // Show or hide mechanics panels based on currentGame.
+    function updateMechanicsVisibility() {
+      // Only display mechanics for the standard games.
+      document.getElementById('froggerMechanics').style.display = (currentGame === 'frogger') ? 'block' : 'none';
+      document.getElementById('breakoutMechanics').style.display = (currentGame === 'breakout') ? 'block' : 'none';
+      document.getElementById('spaceinvadersMechanics').style.display = (currentGame === 'spaceinvaders') ? 'block' : 'none';
+      document.getElementById('runnerMechanics').style.display = (currentGame === 'runner') ? 'block' : 'none';
+    }
+
+    // Mechanics toggle functions.
     function toggleLongerLogs() {
       if (!db) return;
       const ref = db.ref('mechanics/frogger/longerLogs');
@@ -153,7 +191,6 @@
           .catch(err => console.error("Error toggling longerLogs:", err));
       });
     }
-
     function toggleSlowCars() {
       if (!db) return;
       const ref = db.ref('mechanics/frogger/slowCars');
@@ -167,7 +204,6 @@
           .catch(err => console.error("Error toggling slowCars:", err));
       });
     }
-
     function toggleVerticalCenterMode() {
       if (!db) return;
       const ref = db.ref('mechanics/frogger/verticalCenterMode');
@@ -181,8 +217,6 @@
           .catch(err => console.error("Error toggling verticalCenterMode:", err));
       });
     }
-
-    // --- Breakout Mechanics Toggles ---
     function toggleAddBall() {
       if (!db) return;
       const ref = db.ref('mechanics/breakout/addBall');
@@ -193,7 +227,6 @@
         })
         .catch(err => console.error("Error triggering addBall:", err));
     }
-
     function toggleWiderPaddle() {
       if (!db) return;
       const ref = db.ref('mechanics/breakout/widerPaddle');
@@ -207,7 +240,6 @@
           .catch(err => console.error("Error toggling widerPaddle:", err));
       });
     }
-
     function toggleLargerBalls() {
       if (!db) return;
       const ref = db.ref('mechanics/breakout/largerBalls');
@@ -221,8 +253,6 @@
           .catch(err => console.error("Error toggling largerBalls:", err));
       });
     }
-
-    // --- Space Invaders Mechanics Toggles ---
     function toggleInfiniteShooting() {
       if (!db) return;
       const ref = db.ref('mechanics/spaceinvaders/infiniteShooting');
@@ -236,7 +266,6 @@
           .catch(err => console.error("Error toggling infiniteShooting:", err));
       });
     }
-
     function toggleDoubleShot() {
       if (!db) return;
       const ref = db.ref('mechanics/spaceinvaders/doubleShot');
@@ -250,7 +279,6 @@
           .catch(err => console.error("Error toggling doubleShot:", err));
       });
     }
-
     function toggleFriendlyFire() {
       if (!db) return;
       const ref = db.ref('mechanics/spaceinvaders/friendlyFire');
@@ -264,8 +292,6 @@
           .catch(err => console.error("Error toggling friendlyFire:", err));
       });
     }
-
-    // --- Runner Mechanics Toggles ---
     function toggleDoubleJump() {
       if (!db) return;
       const ref = db.ref('mechanics/runner/doubleJump');
@@ -279,7 +305,6 @@
           .catch(err => console.error("Error toggling doubleJump:", err));
       });
     }
-
     function toggleBridges() {
       if (!db) return;
       const ref = db.ref('mechanics/runner/bridges');
@@ -293,7 +318,6 @@
           .catch(err => console.error("Error toggling bridges:", err));
       });
     }
-
     function toggleCoins() {
       if (!db) return;
       const ref = db.ref('mechanics/runner/coins');
@@ -307,44 +331,67 @@
           .catch(err => console.error("Error toggling coins:", err));
       });
     }
+    function setMechanicButtonState(mechanicPath, buttonId) {
+      if (!db) return;
+      db.ref(mechanicPath).once('value').then(snap => {
+        const val = snap.val() || false;
+        document.getElementById(buttonId).classList.toggle('active', val);
+      });
+    }
+    function clearLeaderboards() {
+      if (!db) return;
+      if (confirm("Are you sure you want to clear all leaderboards? This cannot be undone.")) {
+        db.ref('attendees').remove()
+          .then(() => {
+            console.log("All leaderboards cleared.");
+          })
+          .catch(err => console.error("Error clearing leaderboards:", err));
+      }
+    }
   </script>
 </head>
 
 <body>
   <h1>Game Controller</h1>
   <div id="container">
-    <!-- LEFT COLUMN: List of Games -->
+    <!-- LEFT COLUMN: Game Client -->
     <div class="column">
-      <button id="game-testgame" onclick="setCurrentGame('testgame')">Test Game</button>
+      <h2>Game Client</h2>
+      <button id="game-showScore" onclick="setCurrentGame('showScore')">Show Score</button>
       <button id="game-frogger" onclick="setCurrentGame('frogger')">Frogger</button>
       <button id="game-breakout" onclick="setCurrentGame('breakout')">Breakout</button>
       <button id="game-runner" onclick="setCurrentGame('runner')">Runner</button>
       <button id="game-spaceinvaders" onclick="setCurrentGame('spaceinvaders')">Space Invaders</button>
     </div>
+    <!-- MIDDLE COLUMN: Leaderboard Game Selector -->
+    <div class="column">
+      <h2>Leaderboard Game</h2>
+      <button id="lb-game-showCumulativeScore" onclick="setLeaderboardGame('showCumulativeScore')">Show Cumulative Score</button>
+      <button id="lb-game-frogger" onclick="setLeaderboardGame('frogger')">Frogger</button>
+      <button id="lb-game-breakout" onclick="setLeaderboardGame('breakout')">Breakout</button>
+      <button id="lb-game-runner" onclick="setLeaderboardGame('runner')">Runner</button>
+      <button id="lb-game-spaceinvaders" onclick="setLeaderboardGame('spaceinvaders')">Space Invaders</button>
+    </div>
     <!-- RIGHT COLUMN: Mechanics Panels -->
     <div class="column" id="mechanicsPanel">
-      <!-- Frogger Mechanics -->
       <div id="froggerMechanics" style="display: none;">
         <h2>Frogger Mechanics</h2>
         <button id="btn-longerLogs" onclick="toggleLongerLogs()">Toggle Longer Logs</button>
         <button id="btn-slowCars" onclick="toggleSlowCars()">Toggle Slow Cars</button>
         <button id="btn-verticalCenterMode" onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
       </div>
-      <!-- Breakout Mechanics -->
       <div id="breakoutMechanics" style="display: none;">
         <h2>Breakout Mechanics</h2>
         <button id="btn-addBall" onclick="toggleAddBall()">Add Ball</button>
         <button id="btn-widerPaddle" onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
         <button id="btn-largerBalls" onclick="toggleLargerBalls()">Toggle Larger Balls</button>
       </div>
-      <!-- Space Invaders Mechanics -->
       <div id="spaceinvadersMechanics" style="display: none;">
         <h2>Space Invaders Mechanics</h2>
         <button id="btn-infiniteShooting" onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
         <button id="btn-doubleShot" onclick="toggleDoubleShot()">Toggle Double Shot</button>
         <button id="btn-friendlyFire" onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
       </div>
-      <!-- Runner Mechanics -->
       <div id="runnerMechanics" style="display: none;">
         <h2>Runner Mechanics</h2>
         <button id="btn-doubleJump" onclick="toggleDoubleJump()">Toggle Double Jump</button>
@@ -352,6 +399,9 @@
         <button id="btn-coins" onclick="toggleCoins()">Toggle Coins</button>
       </div>
     </div>
+  </div>
+  <div id="clearLeaderboardContainer">
+    <button id="clearAllLeaderboards" onclick="clearLeaderboards()">Clear all leaderboards</button>
   </div>
 </body>
 

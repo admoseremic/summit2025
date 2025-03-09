@@ -5,6 +5,7 @@ import { startFrogger } from './frogger.js';
 import { startBreakout } from './breakout.js';
 import { startRunner } from './runner.js';
 import { startSpaceInvaders } from './spaceinvaders.js';
+import { showScoreScreen } from './showScore.js';
 
 // Global references
 const arcadeState = {
@@ -23,6 +24,12 @@ const arcadeState = {
   highScoreElement: null
 }
 window.arcadeState = arcadeState;
+
+const sounds = {
+  fire: new Audio('sounds/fire.mp3'),
+  gameStart: new Audio('sounds/game-start.mp3'),
+  gameOver: new Audio('sounds/game-over.mp3')
+}
 
 const ASPECT_RATIO = 9 / 16;
 
@@ -43,12 +50,21 @@ function stopGame() {
  *************************************************************/
 function gameOver(restartCallback) {
   arcadeState.isGameOver = true;
+  sounds.gameOver.play();
   stopGame();
 
   // Use greater-than-or-equal-to check for ties
   if (arcadeState.username && arcadeState.userId && arcadeState.currentScore >= arcadeState.highScore) {
-    arcadeState.db.ref(`attendees/${arcadeState.userId}/${arcadeState.game}`)
-      .set(arcadeState.currentScore)
+    const cachedUsername = localStorage.getItem('username');
+    if (cachedUsername) {
+      arcadeState.username = cachedUsername;
+    }
+
+    arcadeState.db.ref(`attendees/${arcadeState.userId}`)
+      .update({
+        [arcadeState.game]: arcadeState.currentScore,
+        name: arcadeState.username
+      })
       .then(() => {
         arcadeState.highScore = arcadeState.currentScore;
         localStorage.setItem('highScore_' + arcadeState.game, arcadeState.highScore);
@@ -152,6 +168,8 @@ export function loadGame(gameName) {
     case "testgame":
       startTestGame();
       break;
+    case "showScore":
+      showScoreScreen();
     default:
       console.error("Unknown game:", gameName);
   }

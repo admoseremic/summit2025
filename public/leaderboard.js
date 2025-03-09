@@ -1,6 +1,6 @@
 let db;
 let currentGame = "testgame"; // Default if not set by host.
-const refreshInterval = 1000; // Refresh every 1000ms (1 second).
+const refreshInterval = 1000; // Refresh every 1 second.
 
 // Initialize Firebase when DOM is ready.
 document.addEventListener('DOMContentLoaded', initFirebase);
@@ -20,7 +20,7 @@ function initFirebase() {
       };
       firebase.initializeApp(firebaseConfig);
       db = firebase.database();
-      listenForGameChanges();
+      listenForLeaderboardGame();
       // Start periodic refresh.
       setInterval(updateLeaderboard, refreshInterval);
     })
@@ -29,13 +29,17 @@ function initFirebase() {
     });
 }
 
-// Listen for changes to the current game.
-function listenForGameChanges() {
-  db.ref('currentGame').on('value', snapshot => {
+// Listen for changes to the leaderboard game.
+function listenForLeaderboardGame() {
+  db.ref('leaderboardGame').on('value', snapshot => {
     const game = snapshot.val();
     if (game) {
       currentGame = game;
-      document.getElementById('leaderboardTitle').innerText = capitalize(game);
+      if (currentGame === 'showCumulativeScore') {
+        document.getElementById('leaderboardTitle').innerText = 'Cumulative Score';
+      } else {
+        document.getElementById('leaderboardTitle').innerText = capitalize(currentGame);
+      }
       updateLeaderboard(); // Immediate update on game change.
     }
   });
@@ -46,17 +50,33 @@ function updateLeaderboard() {
   db.ref('attendees').once('value')
     .then(snapshot => {
       const attendees = snapshot.val();
-      const scores = [];
+      let scores = [];
 
-      // Loop through attendees and build an array of { name, score } objects.
-      for (let key in attendees) {
-        if (attendees.hasOwnProperty(key)) {
-          const user = attendees[key];
-          let score = parseFloat(user[currentGame]);
-          if (isNaN(score)) score = 0;
-          // Only include non-zero scores.
-          if (score > 0) {
-            scores.push({ name: user.name, score });
+      if (currentGame === 'showCumulativeScore') {
+        // Calculate cumulative score for each attendee.
+        for (let key in attendees) {
+          if (attendees.hasOwnProperty(key)) {
+            const user = attendees[key];
+            const breakout = parseFloat(user.breakout) || 0;
+            const runner = parseFloat(user.runner) || 0;
+            const spaceinvaders = parseFloat(user.spaceinvaders) || 0;
+            const frogger = parseFloat(user.frogger) || 0;
+            const total = breakout + runner + spaceinvaders + frogger;
+            if (total > 0) {
+              scores.push({ name: user.name, score: total });
+            }
+          }
+        }
+      } else {
+        // Regular mode: get the score for the selected game.
+        for (let key in attendees) {
+          if (attendees.hasOwnProperty(key)) {
+            const user = attendees[key];
+            let score = parseFloat(user[currentGame]);
+            if (isNaN(score)) score = 0;
+            if (score > 0) {
+              scores.push({ name: user.name, score });
+            }
           }
         }
       }
@@ -98,8 +118,7 @@ function updateLeaderboard() {
         scoreSpan.classList.add('score');
         scoreSpan.textContent = user.score;
 
-        // Calculate the gradient color.
-        // highestScore => yellow (hue 60), 0 => red (hue 0).
+        // Calculate the gradient color: highest => yellow (hue 60), 0 => red (hue 0).
         let hue = highestScore > 0 ? (user.score / highestScore) * 60 : 0;
         const color = `hsl(${hue}, 100%, 50%)`;
         rankSpan.style.color = color;
