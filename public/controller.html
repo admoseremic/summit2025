@@ -21,24 +21,34 @@
     }
 
     .column {
+      display: flex;
       flex: 1;
+      flex-direction: column;
+      gap: 10px;
       min-width: 200px;
       padding: 10px;
     }
 
     button {
-      padding: 10px;
-      margin: 5px;
-      font-size: 14px;
+      padding: 12px 15px;
+      margin: 10px 5px;
+      font-size: 16px;
       cursor: pointer;
       background-color: #555;
       color: white;
       border: none;
       border-radius: 8px;
+      max-width: 300px;
     }
 
     button:hover {
       background-color: #777;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
     /* Active state: highlighted blue */
@@ -65,6 +75,12 @@
     #clearLeaderboardContainer {
       text-align: center;
       margin-top: 20px;
+    }
+
+    .mechanics-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -138,7 +154,7 @@
       });
     }
 
-    // Update button selection for game client.
+    // Update selection for game client buttons.
     function updateGameSelection() {
       const games = ['showScore', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
       games.forEach(game => {
@@ -153,7 +169,7 @@
       });
     }
 
-    // Update button selection for leaderboard.
+    // Update selection for leaderboard buttons.
     function updateLeaderboardGameSelection() {
       const games = ['showCumulativeScore', 'frogger', 'breakout', 'runner', 'spaceinvaders'];
       games.forEach(game => {
@@ -175,6 +191,7 @@
       document.getElementById('breakoutMechanics').style.display = (currentGame === 'breakout') ? 'block' : 'none';
       document.getElementById('spaceinvadersMechanics').style.display = (currentGame === 'spaceinvaders') ? 'block' : 'none';
       document.getElementById('runnerMechanics').style.display = (currentGame === 'runner') ? 'block' : 'none';
+      document.getElementById('showScoreMechanics').style.display = (currentGame === 'showScore') ? 'block' : 'none';
     }
 
     // Mechanics toggle functions.
@@ -331,6 +348,20 @@
           .catch(err => console.error("Error toggling coins:", err));
       });
     }
+    // New toggle for the Show Score link visibility mechanic.
+    function toggleShowScoreLink() {
+      if (!db) return;
+      const ref = db.ref('mechanics/showScore/linkVisible');
+      ref.once('value').then(snap => {
+        const currentVal = snap.val() || false;
+        ref.set(!currentVal)
+          .then(() => {
+            console.log("Toggled Show Score Link visibility to", !currentVal);
+            setMechanicButtonState('mechanics/showScore/linkVisible', 'btn-showScoreLink');
+          })
+          .catch(err => console.error("Error toggling Show Score Link:", err));
+      });
+    }
     function setMechanicButtonState(mechanicPath, buttonId) {
       if (!db) return;
       db.ref(mechanicPath).once('value').then(snap => {
@@ -374,29 +405,33 @@
     </div>
     <!-- RIGHT COLUMN: Mechanics Panels -->
     <div class="column" id="mechanicsPanel">
-      <div id="froggerMechanics" style="display: none;">
+      <div class="mechanics-group" id="froggerMechanics" style="display: none;">
         <h2>Frogger Mechanics</h2>
         <button id="btn-longerLogs" onclick="toggleLongerLogs()">Toggle Longer Logs</button>
         <button id="btn-slowCars" onclick="toggleSlowCars()">Toggle Slow Cars</button>
         <button id="btn-verticalCenterMode" onclick="toggleVerticalCenterMode()">Toggle Vertical Center Mode</button>
       </div>
-      <div id="breakoutMechanics" style="display: none;">
+      <div class="mechanics-group" id="breakoutMechanics" style="display: none;">
         <h2>Breakout Mechanics</h2>
         <button id="btn-addBall" onclick="toggleAddBall()">Add Ball</button>
         <button id="btn-widerPaddle" onclick="toggleWiderPaddle()">Toggle Wider Paddle</button>
         <button id="btn-largerBalls" onclick="toggleLargerBalls()">Toggle Larger Balls</button>
       </div>
-      <div id="spaceinvadersMechanics" style="display: none;">
+      <div class="mechanics-group" id="spaceinvadersMechanics" style="display: none;">
         <h2>Space Invaders Mechanics</h2>
         <button id="btn-infiniteShooting" onclick="toggleInfiniteShooting()">Toggle Infinite Shooting</button>
         <button id="btn-doubleShot" onclick="toggleDoubleShot()">Toggle Double Shot</button>
         <button id="btn-friendlyFire" onclick="toggleFriendlyFire()">Toggle Friendly Fire</button>
       </div>
-      <div id="runnerMechanics" style="display: none;">
+      <div class="mechanics-group" id="runnerMechanics" style="display: none;">
         <h2>Runner Mechanics</h2>
         <button id="btn-doubleJump" onclick="toggleDoubleJump()">Toggle Double Jump</button>
         <button id="btn-bridges" onclick="toggleBridges()">Toggle Bridges</button>
         <button id="btn-coins" onclick="toggleCoins()">Toggle Coins</button>
+      </div>
+      <div class="mechanics-group" id="showScoreMechanics" style="display: none;">
+        <h2>Show Score Mechanics</h2>
+        <button id="btn-showScoreLink" onclick="toggleShowScoreLink()">Toggle link display</button>
       </div>
     </div>
   </div>

@@ -54,23 +54,7 @@ function gameOver(restartCallback) {
   stopGame();
 
   // Use greater-than-or-equal-to check for ties
-  if (arcadeState.username && arcadeState.userId && arcadeState.currentScore >= arcadeState.highScore) {
-    const cachedUsername = localStorage.getItem('username');
-    if (cachedUsername) {
-      arcadeState.username = cachedUsername;
-    }
-
-    arcadeState.db.ref(`attendees/${arcadeState.userId}`)
-      .update({
-        [arcadeState.game]: arcadeState.currentScore,
-        name: arcadeState.username
-      })
-      .then(() => {
-        arcadeState.highScore = arcadeState.currentScore;
-        localStorage.setItem('highScore_' + arcadeState.game, arcadeState.highScore);
-      })
-      .catch(err => console.error('Error updating high score:', err));
-  }
+  submitCurrentScore();
 
   arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
   arcadeState.ctx.fillStyle = 'white';
@@ -170,6 +154,7 @@ export function loadGame(gameName) {
       break;
     case "showScore":
       showScoreScreen();
+      break;
     default:
       console.error("Unknown game:", gameName);
   }
@@ -388,9 +373,17 @@ function listenForGameChanges() {
   gameRef.on('value', snapshot => {
     stopGame();
     const newGame = snapshot.val() || 'testgame';
-    loadGame(newGame);
+    submitCurrentScore()
+      .then(() => {
+        loadGame(newGame);
+      })
+      .catch(err => {
+        console.error("Error submitting score:", err);
+        loadGame(newGame);
+      });
   });
 }
+
 
 function showTitleScreen(title, onStart) {
   const overlay = document.createElement('div');
@@ -514,6 +507,33 @@ function promptForUsername(callback) {
   });
 
   document.body.appendChild(overlay);
+}
+
+function submitCurrentScore() {
+  // Only submit if a game is active, not in showScore mode, and there is a positive score.
+  if (arcadeState.game && arcadeState.game !== 'showScore' && arcadeState.currentScore > 0) {
+    if (arcadeState.username && arcadeState.userId) {
+      return arcadeState.db.ref(`attendees/${arcadeState.userId}`)
+        .update({
+          [arcadeState.game]: arcadeState.currentScore,
+          name: localStorage.getItem('username')
+        })
+        .then(() => {
+          arcadeState.highScore = arcadeState.currentScore;
+          localStorage.setItem('highScore_' + arcadeState.game, arcadeState.highScore);
+          console.log("Submitted current score for", arcadeState.game);
+        })
+        .catch(err => {
+          console.error('Error submitting score:', err);
+          // Still return a resolved promise so the chain continues.
+          return Promise.resolve();
+        });
+    } else {
+      return Promise.resolve();
+    }
+  } else {
+    return Promise.resolve();
+  }
 }
 
 window.initArcade = initArcade;
