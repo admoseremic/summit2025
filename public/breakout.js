@@ -123,7 +123,7 @@ function spawnBall() {
         vy: vy
     };
     breakoutBalls.push(ball);
-    arcadeState.sounds.ballPaddle.cloneNode(true).play();
+    arcadeState.sounds.ballPaddle.play();
 }
 
 // --- Game Loop ---
@@ -162,22 +162,22 @@ function updateBreakout(deltaTime) {
         if (ball.x < 0) {
             ball.x = 0;
             ball.vx *= -1;
-            arcadeState.sounds.ballPaddle.cloneNode(true).play();
+            arcadeState.sounds.ballPaddle.play();
         }
         if (ball.x + ball.width > arcadeState.baseCols) {
             ball.x = arcadeState.baseCols - ball.width;
             ball.vx *= -1;
-            arcadeState.sounds.ballPaddle.cloneNode(true).play();
+            arcadeState.sounds.ballPaddle.play();
         }
         if (ball.y < 0) {
             ball.y = 0;
             ball.vy *= -1;
-            arcadeState.sounds.ballPaddle.cloneNode(true).play();
+            arcadeState.sounds.ballPaddle.play();
         }
         // If the ball falls below the grid, remove it.
         if (ball.y > arcadeState.baseRows) {
             breakoutBalls.splice(i, 1);
-            arcadeState.sounds.ballFall.cloneNode(true).play();
+            arcadeState.sounds.ballFall.play();
         }
         // Paddle collision:
         if (
@@ -209,7 +209,7 @@ function updateBreakout(deltaTime) {
 
             // Position the ball just above the paddle.
             ball.y = breakoutPaddle.y - ball.height - 0.01;
-            arcadeState.sounds.ballPaddle.cloneNode(true).play();
+            arcadeState.sounds.ballPaddle.play();
         }
 
 
@@ -227,7 +227,7 @@ function updateBreakout(deltaTime) {
                 brick.exists = false;
                 arcadeState.currentScore += 30;
                 if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-                arcadeState.sounds.ballBrick.cloneNode(true).play();
+                arcadeState.sounds.ballBrick.play();
 
                 // Determine which side was hit.
                 let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
