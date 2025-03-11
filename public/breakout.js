@@ -123,7 +123,7 @@ function spawnBall() {
         vy: vy
     };
     breakoutBalls.push(ball);
-    console.log("Sound: ball launch");
+    arcadeState.sounds.ballPaddle.cloneNode(true).play();
 }
 
 // --- Game Loop ---
@@ -162,22 +162,22 @@ function updateBreakout(deltaTime) {
         if (ball.x < 0) {
             ball.x = 0;
             ball.vx *= -1;
-            console.log("Sound: ball bounce");
+            arcadeState.sounds.ballPaddle.cloneNode(true).play();
         }
         if (ball.x + ball.width > arcadeState.baseCols) {
             ball.x = arcadeState.baseCols - ball.width;
             ball.vx *= -1;
-            console.log("Sound: ball bounce");
+            arcadeState.sounds.ballPaddle.cloneNode(true).play();
         }
         if (ball.y < 0) {
             ball.y = 0;
             ball.vy *= -1;
-            console.log("Sound: ball bounce");
+            arcadeState.sounds.ballPaddle.cloneNode(true).play();
         }
         // If the ball falls below the grid, remove it.
         if (ball.y > arcadeState.baseRows) {
             breakoutBalls.splice(i, 1);
-            console.log("Sound: ball lost");
+            arcadeState.sounds.ballFall.cloneNode(true).play();
         }
         // Paddle collision:
         if (
@@ -209,7 +209,7 @@ function updateBreakout(deltaTime) {
 
             // Position the ball just above the paddle.
             ball.y = breakoutPaddle.y - ball.height - 0.01;
-            console.log("Sound: paddle bounce");
+            arcadeState.sounds.ballPaddle.cloneNode(true).play();
         }
 
 
@@ -227,7 +227,7 @@ function updateBreakout(deltaTime) {
                 brick.exists = false;
                 arcadeState.currentScore += 30;
                 if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-                console.log("Sound: brick break");
+                arcadeState.sounds.ballBrick.cloneNode(true).play();
 
                 // Determine which side was hit.
                 let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
@@ -252,7 +252,6 @@ function updateBreakout(deltaTime) {
             ball.vx = ballSpeed * Math.sin(angle);
             ball.vy = -ballSpeed * Math.cos(angle);
         });
-        console.log("Sound: ball speed increased");
     }
 
     // Board clear check: if all bricks are gone.
@@ -275,7 +274,7 @@ function updateBreakout(deltaTime) {
                 }
             }, i * 100);
         }
-        console.log("Sound: board cleared");
+        arcadeState.sounds.invaderRespawn.play();
         // Exit early to avoid falling into the game over check below.
         return;
     }
@@ -308,14 +307,13 @@ function renderBreakout() {
 
     // Draw balls.
     breakoutBalls.forEach(ball => {
-        if (typeof ballImg !== "undefined" && ballImg) {
-            arcadeState.ctx.drawImage(ballImg, ball.x * cellW, ball.y * cellH, ball.width * cellW, ball.height * cellH);
-        } else {
-            arcadeState.ctx.fillStyle = 'white';
-            arcadeState.ctx.beginPath();
-            arcadeState.ctx.arc((ball.x + ball.width / 2) * cellW, (ball.y + ball.height / 2) * cellH, (ball.width * cellW) / 2, 0, Math.PI * 2);
-            arcadeState.ctx.fill();
-        }
+        arcadeState.ctx.drawImage(
+            arcadeState.images.ball,
+            ball.x * cellW,
+            ball.y * cellH,
+            ball.width * cellW,
+            ball.height * cellH
+        );
     });
 }
 

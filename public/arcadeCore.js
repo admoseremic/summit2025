@@ -21,15 +21,36 @@ const arcadeState = {
   baseCols: 9,
   baseRows: 16,
   scoreElement: null,
-  highScoreElement: null
+  highScoreElement: null,
+  sounds: {
+    ballBrick: new Audio('sounds/ball-brick.mp3'),
+    ballFall: new Audio('sounds/ball-fall.mp3'),
+    ballPaddle: new Audio('sounds/ball-paddle.mp3'),
+    frogJump: new Audio('sounds/frog-jump.mp3'),
+    shipExplode: new Audio('sounds/ship-explode.mp3'),
+    shipFire: new Audio('sounds/fire.mp3'),
+    gameOver: new Audio('sounds/game-over.mp3'),
+    runnerJump: new Audio('sounds/runner-jump.mp3'),
+    invaderDrop: new Audio('sounds/invader-drop.mp3'),
+    invaderDead: new Audio('sounds/invader-ded.mp3'),
+    invaderDead2: new Audio('sounds/invader-ded2.mp3'),
+    invaderFire: new Audio('sounds/invader-fire.mp3'),
+    invaderRespawn: new Audio('sounds/invader-respawn.mp3'),
+  },
+  images: {
+    ship: new Image(),
+    enemy1: new Image(),
+    ball: new Image(),
+    frog: new Image()
+  }
 }
-window.arcadeState = arcadeState;
 
-const sounds = {
-  fire: new Audio('sounds/fire.mp3'),
-  gameStart: new Audio('sounds/game-start.mp3'),
-  gameOver: new Audio('sounds/game-over.mp3')
-}
+arcadeState.images.ship.src = 'images/ship.png';
+arcadeState.images.enemy1.src = 'images/si_pm_1.png';
+arcadeState.images.ball.src = 'images/ball.png';
+arcadeState.images.frog.src = 'images/frog.png'
+
+window.arcadeState = arcadeState;
 
 const ASPECT_RATIO = 9 / 16;
 
@@ -50,7 +71,7 @@ function stopGame() {
  *************************************************************/
 function gameOver(restartCallback) {
   arcadeState.isGameOver = true;
-  sounds.gameOver.play();
+  arcadeState.sounds.gameOver.play();
   stopGame();
 
   // Use greater-than-or-equal-to check for ties

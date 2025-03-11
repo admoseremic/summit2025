@@ -234,7 +234,7 @@ function createTruckForRow(rowIndex, direction) {
     row: rowIndex,
     x: Math.random() * (arcadeState.baseCols - 2),
     width: 2,
-    speed: slowCars ? 0.5 : 1,
+    speed: slowCars ? 0.5 : 2,
     direction: direction
   };
   return truck;
@@ -246,7 +246,7 @@ function createLogForRow(rowIndex, direction) {
     row: rowIndex,
     x: Math.random() * (arcadeState.baseCols - logWidth),
     width: logWidth,
-    speed: 1, // Base speed; will be scaled by autoScrollSpeed.
+    speed: 1.5, // Base speed; will be scaled by autoScrollSpeed.
     direction: direction
   };
   return log;
@@ -353,31 +353,58 @@ function updateFrogger(deltaTime) {
     console.log("Processing queued jump: new targetY =", frog.targetY);
   }
 
-  // --- Frog Movement ---
+  // --- Frog Movement with Independent X/Y Lerp ---
   let dx = frog.targetX - frog.x;
   let dy = frog.targetY - frog.y;
   let dist = Math.sqrt(dx * dx + dy * dy);
+
+  // Define separate thresholds for snapping x and y
+  const horizontalThreshold = 0.1;
+  const verticalThreshold = 0.1;
+
+  // Compute a step based on lerp speed.
+  let step = frogLerpSpeed * deltaTime;
+
   if (dist > 0.001) {
-    let step = frogLerpSpeed * deltaTime;
-    if (step >= dist) {
+    // Calculate the next positions using full interpolation.
+    let nextX = frog.x + (dx / dist) * step;
+    let nextY = frog.y + (dy / dist) * step;
+
+    // Snap vertical position if close enough.
+    if (Math.abs(dy) < verticalThreshold) {
+      nextY = Math.round(frog.targetY);
+    }
+    // Snap horizontal position if close enough.
+    if (Math.abs(dx) < horizontalThreshold) {
+      nextX = frog.targetX;
+    }
+
+    frog.x = nextX;
+    frog.y = nextY;
+
+    // Check if both coordinates are within thresholds.
+    if (Math.abs(frog.x - frog.targetX) < horizontalThreshold &&
+      Math.abs(frog.y - frog.targetY) < verticalThreshold) {
+      // Finalize landing.
       frog.x = frog.targetX;
-      frog.y = Math.round(frog.targetY); // Round after landing
+      frog.y = Math.round(frog.targetY); // ensure y aligns to a grid row
       frog.animationState = "sitting";
       let currentRow = terrainRows.find(row => row.index === Math.floor(frog.y));
       if (currentRow && currentRow.type !== "river") {
+        // For non-river rows, round x to ensure collision checks align.
         frog.x = Math.round(frog.x);
         frog.targetX = frog.x;
       } else {
+        // For river rows, attempt to snap the frog to the nearest log.
         maybeSnapFrogToLog();
       }
     } else {
-      frog.x += (dx / dist) * step;
-      frog.y += (dy / dist) * step;
       frog.animationState = "jumping";
       frog.snappedLog = null;
       frog.snapOffset = null;
     }
   } else if (frog.animationState === "sitting" && frog.snappedLog && frog.targetY === frog.y) {
+    // If frog is snapped to a log, follow its movement.
     frog.x = frog.snappedLog.x + frog.snapOffset;
     frog.targetX = frog.x;
   }
@@ -405,17 +432,16 @@ function updateFrogger(deltaTime) {
     generateNextTerrainPhase();
   }
 
-  // Update existing entities with current mechanic toggles:
+  // Update trucks and logs with any mechanic changes.
   trucks.forEach(truck => {
-    truck.speed = slowCars ? 0.5 : 1;
+    truck.speed = slowCars ? 0.5 : 3;
   });
   logs.forEach(log => {
-    // Update width and recalc snap points for logs
     log.width = longerLogs ? 4 : 2;
     log.snapPoints = computeLogSnapPoints(log);
   });
 
-  // --- Update Trucks and Logs ---
+  // --- Update Trucks and Logs Positions ---
   trucks.forEach(truck => {
     truck.x += truck.speed * truck.direction * deltaTime;
     if (truck.x > arcadeState.baseCols) {
@@ -435,25 +461,26 @@ function updateFrogger(deltaTime) {
     log.snapPoints = computeLogSnapPoints(log);
   });
 
-  // --- Frog and Log Interaction ---
+  // --- River and Collision Checks ---
   let frogRow = Math.floor(frog.y);
-  let currentRow2 = terrainRows.find(row => row.index === frogRow && row.type === "river");
-  if (currentRow2) {
-    let log = currentRow2.log;
+  let currentRow = terrainRows.find(row => row.index === frogRow && row.type === "river");
+  if (currentRow) {
+    let log = currentRow.log;
     if (!log) {
       arcadeState.isGameOver = true;
     }
   }
 
-  // --- Scoring ---
-  let currentRow = Math.floor(frog.y);
-  if (currentRow > maxRowReached) {
-    maxRowReached = currentRow;
-    arcadeState.currentScore += 50;
-    arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-  }
+// --- Scoring ---
+let currentScoreRow = Math.floor(frog.y);
+if (currentScoreRow > maxRowReached) {
+  maxRowReached = currentScoreRow;
+  arcadeState.currentScore += 50;
+  arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
+}
 
-  // --- Truck Collision ---
+
+  // Truck collision detection.
   let frogCenterY = frog.y + 0.5;
   let frogGridY = Math.floor(frog.y);
   let roadRow = terrainRows.find(row => row.index === frogGridY && row.type === "road");
@@ -556,23 +583,53 @@ function renderFrogger() {
     }
   });
 
-  let frogYPixel = arcadeState.canvas.height - ((frog.y - cameraY) * cellH);
-  arcadeState.ctx.fillStyle = "lime";
-  arcadeState.ctx.fillRect(frog.x * cellW, frogYPixel - cellH, cellW, cellH);
+  let angle = 0;
+  switch (frog.facing) {
+    case "north":
+      angle = 0;
+      break;
+    case "east":
+      angle = 90;
+      break;
+    case "south":
+      angle = 180;
+      break;
+    case "west":
+      angle = 270;
+      break;
+  }
 
-  arcadeState.ctx.fillStyle = "black";
-  arcadeState.ctx.font = "10px Arial";
-  arcadeState.ctx.fillText(frog.facing, (frog.x + 0.2) * cellW, frogYPixel - 0.2 * cellH);
+  drawImage(
+    arcadeState.ctx,
+    arcadeState.images.frog,
+    frog.x * cellW,
+    arcadeState.canvas.height - ((frog.y - cameraY) * cellH) - cellH,
+    cellW,
+    cellH,
+    angle
+  );
+}
+
+function drawImage(ctx, image, x, y, w, h, degrees) {
+  ctx.save();
+  ctx.translate(x + w / 2, y + h / 2);
+  ctx.rotate(degrees * Math.PI / 180.0);
+  ctx.translate(-x - w / 2, -y - h / 2);
+  ctx.drawImage(image, x, y, w, h);
+  ctx.restore();
 }
 
 // --------------------
 // Input Handlers
 // --------------------
 function handleFroggerInput(e) {
+  const cellW = arcadeState.canvas.width / arcadeState.baseCols;
+  const cellH = arcadeState.canvas.height / arcadeState.baseRows;
+
   if (arcadeState.isGameOver) return;
-  let rect = arcadeState.canvas.getBoundingClientRect();
-  let clientX, clientY;
   e.preventDefault();
+
+  let clientX, clientY;
   if (e.type === 'click') {
     clientX = e.clientX;
     clientY = e.clientY;
@@ -581,35 +638,38 @@ function handleFroggerInput(e) {
     clientY = e.touches[0].clientY;
   }
 
-  let x = ((clientX - rect.left) / arcadeState.canvas.width) * arcadeState.baseCols;
-  let y = ((arcadeState.canvas.height - (clientY - rect.top)) / arcadeState.canvas.height) * arcadeState.baseRows + cameraY;
+  // Convert the client coordinates to canvas coordinates.
+  const rect = arcadeState.canvas.getBoundingClientRect();
+  const tapX = clientX - rect.left;
+  const tapY = clientY - rect.top;
 
-  let dx = x - frog.x;
-  let dy = y - frog.y;
-  if (Math.abs(dy) >= Math.abs(dx)) {
-    frog.snappedLog = null;
-    frog.snapOffset = null;
-    if (dy > 0) {
-      if (frog.animationState === "jumping" && !frog.queuedJump) {
-        frog.queuedJump = true;
-        console.log("Queued jump");
-      } else if (frog.animationState !== "jumping") {
-        frog.targetY = frog.y + 1;
-        frog.facing = "north";
-      }
-    }
+  // Calculate the frog's drawn center position.
+  const frogPixelX = frog.x * cellW;
+  const frogPixelY = arcadeState.canvas.height - ((frog.y - cameraY) * cellH);
+  const frogCenterX = frogPixelX + cellW / 2;
+  const frogCenterY = frogPixelY - cellH / 2;
+
+  // Determine movement based on tap location:
+  if (tapY < frogCenterY - 0.5 * cellH) {
+    // Tap is more than 0.5 cells above the frog: move upward.
+    frog.targetY = frog.y + 1;
+    frog.facing = "north";
   } else {
-    processHorizontalInput(dx);
+    // Otherwise, if the tap is below that horizontal line:
+    if (tapX < frogCenterX) {
+      frog.targetX = frog.x - 1;
+      frog.facing = "west";
+    } else if (tapX > frogCenterX) {
+      frog.targetX = frog.x + 1;
+      frog.facing = "east";
+    }
   }
 
+  // Constrain the target positions to within grid boundaries.
   frog.targetX = Math.max(0, Math.min(arcadeState.baseCols - 1, frog.targetX));
   frog.targetY = Math.max(0, frog.targetY);
 
-  if (Math.abs(dy) < Math.abs(dx)) {
-    frog.snappedLog = null;
-    frog.snapOffset = null;
-    frog.queuedJump = false;
-  }
+  arcadeState.sounds.frogJump.cloneNode(true).play();
 }
 
 // --------------------

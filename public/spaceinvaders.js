@@ -86,6 +86,8 @@ let infiniteShooting = false;
 let doubleShot = false;
 let friendlyFire = false;
 
+
+
 // --- Initialization Functions ---
 
 // Initialize the spaceship using arcade units.
@@ -150,7 +152,7 @@ function firePlayerBullet() {
       };
       playerBullets.push(bullet);
     });
-    console.log("Sound: double shot fire");
+    arcadeState.sounds.shipFire.cloneNode(true).play();
   } else {
     let bullet = {
       x: spaceship.x + 0.5 - 0.05,
@@ -160,7 +162,7 @@ function firePlayerBullet() {
       vy: 10
     };
     playerBullets.push(bullet);
-    console.log("Sound: spaceship fire");
+    arcadeState.sounds.shipFire.cloneNode(true).play();
   }
 }
 
@@ -186,7 +188,7 @@ function spawnEnemyBulletFromGrid() {
         vy: 3 // bullet travels straight down
       };
       enemyBullets.push(bullet);
-      console.log("Sound: enemy fired straight down");
+      arcadeState.sounds.invaderFire.cloneNode(true).play();
     }
   }
 }
@@ -207,7 +209,7 @@ function handleSpaceInvadersInput(e) {
   let targetX = (((clientX - rect.left) / arcadeState.canvas.width) * arcadeState.baseCols) - spaceship.width / 2;
   targetX = Math.max(0, Math.min(arcadeState.baseCols - spaceship.width, targetX));
   spaceship.targetX = targetX;
-  
+
   // Also fire a bullet when tapped.
   firePlayerBullet();
 }
@@ -225,7 +227,7 @@ function updateSpaceInvaders(deltaTime) {
       spaceship.x += step * Math.sign(dx);
     }
   }
-  
+
   // Update player bullets (move upward).
   for (let i = playerBullets.length - 1; i >= 0; i--) {
     let bullet = playerBullets[i];
@@ -234,7 +236,7 @@ function updateSpaceInvaders(deltaTime) {
       playerBullets.splice(i, 1);
     }
   }
-  
+
   // Update enemy bullets (move using their vx and vy).
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     let bullet = enemyBullets[i];
@@ -242,11 +244,11 @@ function updateSpaceInvaders(deltaTime) {
     bullet.y += bullet.vy * deltaTime;
     // Remove bullet if it goes off the grid.
     if (bullet.y > arcadeState.baseRows || bullet.y + bullet.height < 0 ||
-        bullet.x > arcadeState.baseCols || bullet.x + bullet.width < 0) {
+      bullet.x > arcadeState.baseCols || bullet.x + bullet.width < 0) {
       enemyBullets.splice(i, 1);
     }
   }
-  
+
   // --- Enemy Formation Movement ---
   let aliveEnemies = enemies.filter(e => e.alive);
   if (aliveEnemies.length > 0) {
@@ -254,13 +256,13 @@ function updateSpaceInvaders(deltaTime) {
     let formationRight = Math.max(...aliveEnemies.map(e => e.x + e.width));
     // Check if the formation has reached an edge.
     if ((enemyGroup.direction > 0 && formationRight >= arcadeState.baseCols - 0.5) ||
-        (enemyGroup.direction < 0 && formationLeft <= 0.5)) {
+      (enemyGroup.direction < 0 && formationLeft <= 0.5)) {
       if (!enemyGroup.isDropping) {
         // Drop formation by 0.5 arcade units once and reverse direction.
         aliveEnemies.forEach(e => { e.y += 0.5; });
         enemyGroup.direction *= -1;
         enemyGroup.isDropping = true;
-        console.log("Sound: enemy formation dropped and reversed");
+        arcadeState.sounds.invaderDrop.play();
       }
     } else {
       enemyGroup.isDropping = false;
@@ -270,15 +272,14 @@ function updateSpaceInvaders(deltaTime) {
       });
     }
   }
-  
+
   // Increase enemy group speed every 10 seconds (10% increase).
   enemySpeedTimer += deltaTime;
   if (enemySpeedTimer >= 5) {
     enemyGroup.speed *= 1.1;
     enemySpeedTimer -= 5;
-    console.log("Sound: enemy speed increased");
   }
-  
+
   // --- Enemy Firing ---
   enemyFireTimer += deltaTime;
   if (enemyFireTimer >= (1 / enemyFireRate)) {
@@ -290,11 +291,10 @@ function updateSpaceInvaders(deltaTime) {
   if (enemyFireRateTimer >= 5) {
     enemyFireRate *= 1.1;
     enemyFireRateTimer -= 5;
-    console.log("Sound: enemy fire rate increased");
   }
-  
+
   // --- Collision Detection ---
-  
+
   // Player bullet vs. enemy.
   for (let i = playerBullets.length - 1; i >= 0; i--) {
     let bullet = playerBullets[i];
@@ -303,16 +303,16 @@ function updateSpaceInvaders(deltaTime) {
         enemy.alive = false;
         playerBullets.splice(i, 1);
         arcadeState.currentScore += 20;
-        console.log("Sound: enemy destroyed");
+        arcadeState.sounds.invaderDead2.cloneNode(true).play();
       }
     });
   }
-  
+
   // Update score display.
   if (arcadeState.scoreElement) {
     arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
   }
-  
+
   // Player bullet vs. shields (if friendlyFire is off).
   if (!friendlyFire) {
     for (let i = playerBullets.length - 1; i >= 0; i--) {
@@ -322,7 +322,7 @@ function updateSpaceInvaders(deltaTime) {
         if (checkCollision(bullet, shield)) {
           shield.health -= 1;
           playerBullets.splice(i, 1);
-          console.log("Sound: shield hit by player bullet");
+          arcadeState.sounds.invaderDead.cloneNode(true).play();
           break;
         }
       }
@@ -337,28 +337,28 @@ function updateSpaceInvaders(deltaTime) {
       if (checkCollision(bullet, shield)) {
         shield.health -= 1;
         enemyBullets.splice(i, 1);
-        console.log("Sound: shield hit by enemy bullet");
+        arcadeState.sounds.invaderDead.cloneNode(true).play();
         break;
       }
     }
   }
-  
+
   // Enemy bullet vs. spaceship.
   enemyBullets.forEach(bullet => {
     if (checkCollision(bullet, spaceship) && !arcadeState.isGameOver) {
-      console.log("Sound: spaceship hit by enemy bullet");
+      arcadeState.sounds.shipExplode.play();
       gameOver(() => { initSpaceInvaders(); });
     }
   });
-  
+
   // Enemy vs. spaceship.
   enemies.forEach(enemy => {
     if (enemy.alive && checkCollision(enemy, spaceship) && !arcadeState.isGameOver) {
-      console.log("Sound: spaceship collided with enemy");
+      arcadeState.sounds.shipExplode.play();
       gameOver(() => { initSpaceInvaders(); });
     }
   });
-  
+
   // Enemy vs. shields.
   enemies.forEach(enemy => {
     if (enemy.alive) {
@@ -371,16 +371,16 @@ function updateSpaceInvaders(deltaTime) {
       });
     }
   });
-  
+
   // Remove shields that have no health.
   shields = shields.filter(shield => shield.health > 0);
-  
+
   // When all enemies are cleared, respawn them.
   if (enemies.filter(e => e.alive).length === 0) {
     playerBullets = [];
     initEnemies();
     initShields();
-    console.log("Sound: enemy formation respawned");
+    arcadeState.sounds.invaderRespawn.play();
     if (arcadeState.scoreElement) {
       arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
     }
@@ -390,9 +390,9 @@ function updateSpaceInvaders(deltaTime) {
 // Simple AABB collision detection.
 function checkCollision(a, b) {
   return a.x < b.x + b.width &&
-         a.x + a.width > b.x &&
-         a.y < b.y + b.height &&
-         a.y + a.height > b.y;
+    a.x + a.width > b.x &&
+    a.y < b.y + b.height &&
+    a.y + a.height > b.y;
 }
 
 // --- Render Function ---
@@ -400,31 +400,45 @@ function renderSpaceInvaders() {
   let cellW = arcadeState.canvas.width / arcadeState.baseCols;
   let cellH = arcadeState.canvas.height / arcadeState.baseRows;
   arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
-  
+
   // Render spaceship.
-  arcadeState.ctx.fillStyle = "lime";
-  arcadeState.ctx.fillRect(spaceship.x * cellW, spaceship.y * cellH, spaceship.width * cellW, spaceship.height * cellH);
-  
+  arcadeState.ctx.drawImage(
+    arcadeState.images.ship,
+    spaceship.x * cellW,
+    spaceship.y * cellH,
+    spaceship.width * cellW,
+    spaceship.height * cellH
+  );
+  //arcadeState.ctx.fillStyle = "lime";
+  //arcadeState.ctx.fillRect(spaceship.x * cellW, spaceship.y * cellH, spaceship.width * cellW, spaceship.height * cellH);
+
   // Render player bullets.
   arcadeState.ctx.fillStyle = "white";
   playerBullets.forEach(bullet => {
     arcadeState.ctx.fillRect(bullet.x * cellW, bullet.y * cellH, bullet.width * cellW, bullet.height * cellH);
   });
-  
+
   // Render enemy bullets.
   arcadeState.ctx.fillStyle = "yellow";
   enemyBullets.forEach(bullet => {
     arcadeState.ctx.fillRect(bullet.x * cellW, bullet.y * cellH, bullet.width * cellW, bullet.height * cellH);
   });
-  
+
   // Render enemies.
-  arcadeState.ctx.fillStyle = "red";
+  //arcadeState.ctx.fillStyle = "red";
   enemies.forEach(enemy => {
     if (enemy.alive) {
-      arcadeState.ctx.fillRect(enemy.x * cellW, enemy.y * cellH, enemy.width * cellW, enemy.height * cellH);
+      arcadeState.ctx.drawImage(
+        arcadeState.images.enemy1,
+        enemy.x * cellW,
+        enemy.y * cellH,
+        enemy.width * cellW,
+        enemy.height * cellH
+      );
+      //arcadeState.ctx.fillRect(enemy.x * cellW, enemy.y * cellH, enemy.width * cellW, enemy.height * cellH);
     }
   });
-  
+
   // Render shields.
   arcadeState.ctx.fillStyle = "blue";
   shields.forEach(shield => {
@@ -441,10 +455,10 @@ function gameLoopSpaceInvaders(timestamp) {
   if (arcadeState.isGameOver) return;
   let deltaTime = (timestamp - arcadeState.previousTimestamp) / 1000;
   arcadeState.previousTimestamp = timestamp;
-  
+
   updateSpaceInvaders(deltaTime);
   renderSpaceInvaders();
-  
+
   arcadeState.animationFrameId = requestAnimationFrame(gameLoopSpaceInvaders);
 }
 
@@ -453,16 +467,16 @@ function initSpaceInvaders() {
   // Reset global game state.
   arcadeState.isGameOver = false;
   arcadeState.currentScore = 0;
-  
+
   // Initialize spaceship, enemies, and shields.
   initSpaceship();
   initEnemies();
   initShields();
-  
+
   // Reset bullet arrays.
   playerBullets = [];
   enemyBullets = [];
-  
+
   // Reset enemy group properties and timers.
   enemyGroup.direction = 1;
   enemyGroup.speed = 0.25;
@@ -471,19 +485,19 @@ function initSpaceInvaders() {
   enemyFireTimer = 0;
   enemySpeedTimer = 0;
   enemyFireRateTimer = 0;
-  
+
   // Remove any existing input listeners to avoid duplicates.
   arcadeState.canvas.removeEventListener('click', handleSpaceInvadersInput);
   arcadeState.canvas.removeEventListener('touchstart', handleSpaceInvadersInput);
-  
+
   // Set up input listeners.
   arcadeState.canvas.addEventListener('click', handleSpaceInvadersInput);
   arcadeState.canvas.addEventListener('touchstart', handleSpaceInvadersInput, { passive: false });
-  
+
   // Start the game loop.
   arcadeState.previousTimestamp = performance.now();
   arcadeState.animationFrameId = requestAnimationFrame(gameLoopSpaceInvaders);
-  
+
   // Listen for Firebase mechanics updates.
   listenToSpaceInvadersMechanics();
 }
