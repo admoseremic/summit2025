@@ -532,7 +532,7 @@ function promptForUsername(callback) {
 
 function submitCurrentScore() {
   // Only submit if a game is active, not in showScore mode, and there is a positive score.
-  if (arcadeState.game && arcadeState.game !== 'showScore' && arcadeState.currentScore > 0) {
+  if (arcadeState.game && arcadeState.game !== 'showScore' && arcadeState.currentScore > 0 && arcadeState.currentScore >= arcadeState.highScore) {
     if (arcadeState.username && arcadeState.userId) {
       return arcadeState.db.ref(`attendees/${arcadeState.userId}`)
         .update({
