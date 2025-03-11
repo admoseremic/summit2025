@@ -48,7 +48,7 @@ function initBreakout() {
     let paddleWidth = widerPaddleActive ? 4 : 2; // in arcade units
     breakoutPaddle = {
         x: (arcadeState.baseCols - paddleWidth) / 2,
-        y: arcadeState.baseRows - 0.5,  // Paddle sits in bottom row (its top edge)
+        y: arcadeState.baseRows - 2.5,  // Paddle sits in bottom row (its top edge)
         width: paddleWidth,
         height: 0.5,
         targetX: (arcadeState.baseCols - paddleWidth) / 2
@@ -242,13 +242,15 @@ function updateBreakout(deltaTime) {
                     arcadeState.sounds.ballBrick.play();
 
                     // Determine which side was hit.
+                    ball.vy *= -1;
+                    /*
                     let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
                     let overlapY = Math.min(ball.y + ball.height - brick.y, brick.y + brick.height - ball.y);
                     if (overlapX < overlapY) {
                         ball.vx *= -1;
                     } else {
                         ball.vy *= -1;
-                    }
+                    }*/
                     break; // Only handle one brick per update.
                 }
             }
