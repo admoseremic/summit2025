@@ -23,6 +23,9 @@ let largerBallsActive = false;   // false: ball size 0.5; true: ball size 1
 // Local variable for the game loop timing
 let previousTimestamp = 0;
 
+// Cache canvas cell dimensions (computed in initBreakout)
+let cellW, cellH;
+
 // --- Entry Point ---
 // Called by arcadeCore.js when currentGame is set to "breakout"
 function startBreakout() {
@@ -61,6 +64,10 @@ function initBreakout() {
     // Attach paddle control listeners (horizontal movement).
     arcadeState.canvas.addEventListener('mousemove', handlePaddleInput);
     arcadeState.canvas.addEventListener('touchmove', handlePaddleInput, { passive: false });
+
+    // Cache cell dimensions (assuming canvas size remains constant)
+    cellW = arcadeState.canvas.width / arcadeState.baseCols;
+    cellH = arcadeState.canvas.height / arcadeState.baseRows;
 
     // Start the game loop.
     previousTimestamp = performance.now();
@@ -178,6 +185,7 @@ function updateBreakout(deltaTime) {
         if (ball.y > arcadeState.baseRows) {
             breakoutBalls.splice(i, 1);
             arcadeState.sounds.ballFall.play();
+            continue;
         }
         // Paddle collision:
         if (
@@ -212,32 +220,37 @@ function updateBreakout(deltaTime) {
             arcadeState.sounds.ballPaddle.play();
         }
 
-
         // Brick collisions:
-        for (let j = 0; j < bricks.length; j++) {
-            let brick = bricks[j];
-            if (!brick.exists) continue;
-            if (
-                ball.x < brick.x + brick.width &&
-                ball.x + ball.width > brick.x &&
-                ball.y < brick.y + brick.height &&
-                ball.y + ball.height > brick.y
-            ) {
-                // Brick hit: remove brick, award points, and bounce ball.
-                brick.exists = false;
-                arcadeState.currentScore += 30;
-                if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-                arcadeState.sounds.ballBrick.play();
+        // Optimization: only check brick collisions if the ball is within the brick region.
+        // Brick region roughly from y=1 to y=7 (based on initBricks layout)
+        if (ball.y + ball.height < 1 || ball.y > 7) {
+            // Skip brick collision check if ball is outside brick region.
+        } else {
+            for (let j = 0; j < bricks.length; j++) {
+                let brick = bricks[j];
+                if (!brick.exists) continue;
+                if (
+                    ball.x < brick.x + brick.width &&
+                    ball.x + ball.width > brick.x &&
+                    ball.y < brick.y + brick.height &&
+                    ball.y + ball.height > brick.y
+                ) {
+                    // Brick hit: remove brick, award points, and bounce ball.
+                    brick.exists = false;
+                    arcadeState.currentScore += 30;
+                    if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
+                    arcadeState.sounds.ballBrick.play();
 
-                // Determine which side was hit.
-                let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
-                let overlapY = Math.min(ball.y + ball.height - brick.y, brick.y + brick.height - ball.y);
-                if (overlapX < overlapY) {
-                    ball.vx *= -1;
-                } else {
-                    ball.vy *= -1;
+                    // Determine which side was hit.
+                    let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
+                    let overlapY = Math.min(ball.y + ball.height - brick.y, brick.y + brick.height - ball.y);
+                    if (overlapX < overlapY) {
+                        ball.vx *= -1;
+                    } else {
+                        ball.vy *= -1;
+                    }
+                    break; // Only handle one brick per update.
                 }
-                break; // Only handle one brick per update.
             }
         }
     }
@@ -287,9 +300,8 @@ function updateBreakout(deltaTime) {
 // --- Render ---
 function renderBreakout() {
     arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
-    const cellW = arcadeState.canvas.width / arcadeState.baseCols;
-    const cellH = arcadeState.canvas.height / arcadeState.baseRows;
 
+    // Use cached cell dimensions: cellW and cellH.
     // Draw bricks.
     bricks.forEach(brick => {
         if (!brick.exists) return;
