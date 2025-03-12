@@ -7,7 +7,17 @@ import { startRunner } from './runner.js';
 import { startSpaceInvaders } from './spaceinvaders.js';
 import { showScoreScreen } from './showScore.js';
 
-// Global references
+// Create an AudioContext (with vendor prefix fallback)
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+// Utility function to load and decode a sound file.
+async function loadSound(url) {
+  const response = await fetch(url);
+  const arrayBuffer = await response.arrayBuffer();
+  return await audioContext.decodeAudioData(arrayBuffer);
+}
+
+// Instantiate arcadeState with a sounds object that will store AudioBuffers.
 const arcadeState = {
   isGameOver: false,
   currentScore: 0,
@@ -22,28 +32,42 @@ const arcadeState = {
   baseRows: 16,
   scoreElement: null,
   highScoreElement: null,
-  sounds: {
-    ballBrick: new Audio('sounds/ball-brick.mp3'),
-    ballFall: new Audio('sounds/ball-fall.mp3'),
-    ballPaddle: new Audio('sounds/ball-paddle.mp3'),
-    frogJump: new Audio('sounds/frog-jump.mp3'),
-    shipExplode: new Audio('sounds/ship-explode.mp3'),
-    shipFire: new Audio('sounds/fire.mp3'),
-    gameOver: new Audio('sounds/game-over.mp3'),
-    runnerJump: new Audio('sounds/runner-jump.mp3'),
-    invaderDrop: new Audio('sounds/invader-drop.mp3'),
-    invaderDead: new Audio('sounds/invader-ded.mp3'),
-    invaderDead2: new Audio('sounds/invader-ded2.mp3'),
-    invaderFire: new Audio('sounds/invader-fire.mp3'),
-    invaderRespawn: new Audio('sounds/invader-respawn.mp3'),
-  },
+  audioContext: audioContext,
+  sounds: {},
   images: {
     ship: new Image(),
     enemy1: new Image(),
     ball: new Image(),
     frog: new Image()
   }
+};
+
+// Preload all sounds.
+Promise.all([
+  loadSound('sounds/ball-brick.mp3').then(buffer => arcadeState.sounds.ballBrick = buffer),
+  loadSound('sounds/ball-fall.mp3').then(buffer => arcadeState.sounds.ballFall = buffer),
+  loadSound('sounds/ball-paddle.mp3').then(buffer => arcadeState.sounds.ballPaddle = buffer),
+  loadSound('sounds/frog-jump.mp3').then(buffer => arcadeState.sounds.frogJump = buffer),
+  loadSound('sounds/ship-explode.mp3').then(buffer => arcadeState.sounds.shipExplode = buffer),
+  loadSound('sounds/fire.mp3').then(buffer => arcadeState.sounds.shipFire = buffer),
+  loadSound('sounds/game-over.mp3').then(buffer => arcadeState.sounds.gameOver = buffer),
+  loadSound('sounds/runner-jump.mp3').then(buffer => arcadeState.sounds.runnerJump = buffer),
+  loadSound('sounds/invader-drop.mp3').then(buffer => arcadeState.sounds.invaderDrop = buffer),
+  loadSound('sounds/invader-ded.mp3').then(buffer => arcadeState.sounds.invaderDead = buffer),
+  loadSound('sounds/invader-ded2.mp3').then(buffer => arcadeState.sounds.invaderDead2 = buffer),
+  loadSound('sounds/invader-fire.mp3').then(buffer => arcadeState.sounds.invaderFire = buffer),
+  loadSound('sounds/invader-respawn.mp3').then(buffer => arcadeState.sounds.invaderRespawn = buffer)
+]);
+
+// Function to play a sound given its AudioBuffer.
+function playSound(audioBuffer) {
+  // Create a new source for each playback.
+  const source = arcadeState.audioContext.createBufferSource();
+  source.buffer = audioBuffer;
+  source.connect(arcadeState.audioContext.destination);
+  source.start(0);
 }
+arcadeState.playSound = playSound;
 
 arcadeState.images.ship.src = 'images/ship.png';
 arcadeState.images.enemy1.src = 'images/si_pm_1.png';
@@ -71,7 +95,7 @@ function stopGame() {
  *************************************************************/
 function gameOver(restartCallback) {
   arcadeState.isGameOver = true;
-  arcadeState.sounds.gameOver.play();
+  arcadeState.playSound(arcadeState.sounds.gameOver);
   stopGame();
 
   // Use greater-than-or-equal-to check for ties

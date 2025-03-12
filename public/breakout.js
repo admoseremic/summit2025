@@ -130,7 +130,7 @@ function spawnBall() {
         vy: vy
     };
     breakoutBalls.push(ball);
-    //arcadeState.sounds.ballPaddle.play();
+    arcadeState.playSound(arcadeState.sounds.ballPaddle);
 }
 
 // --- Game Loop ---
@@ -169,22 +169,22 @@ function updateBreakout(deltaTime) {
         if (ball.x < 0) {
             ball.x = 0;
             ball.vx *= -1;
-            //arcadeState.sounds.ballPaddle.play();
+            arcadeState.playSound(arcadeState.sounds.ballPaddle);
         }
         if (ball.x + ball.width > arcadeState.baseCols) {
             ball.x = arcadeState.baseCols - ball.width;
             ball.vx *= -1;
-            //arcadeState.sounds.ballPaddle.play();
+            arcadeState.playSound(arcadeState.sounds.ballPaddle);
         }
         if (ball.y < 0) {
             ball.y = 0;
             ball.vy *= -1;
-            //arcadeState.sounds.ballPaddle.play();
+            arcadeState.playSound(arcadeState.sounds.ballPaddle);
         }
         // If the ball falls below the grid, remove it.
         if (ball.y > arcadeState.baseRows) {
             breakoutBalls.splice(i, 1);
-            //arcadeState.sounds.ballFall.play();
+            arcadeState.playSound(arcadeState.sounds.ballFall);
             continue;
         }
         // Paddle collision:
@@ -217,7 +217,7 @@ function updateBreakout(deltaTime) {
 
             // Position the ball just above the paddle.
             ball.y = breakoutPaddle.y - ball.height - 0.01;
-            //arcadeState.sounds.ballPaddle.play();
+            arcadeState.playSound(arcadeState.sounds.ballPaddle);
         }
 
         // Brick collisions:
@@ -239,7 +239,7 @@ function updateBreakout(deltaTime) {
                     brick.exists = false;
                     arcadeState.currentScore += 30;
                     if (arcadeState.scoreElement) arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-                    //arcadeState.sounds.ballBrick.play();
+                    arcadeState.playSound(arcadeState.sounds.ballBrick);
 
                     // Determine which side was hit.
                     ball.vy *= -1;
@@ -289,7 +289,7 @@ function updateBreakout(deltaTime) {
                 }
             }, i * 100);
         }
-        arcadeState.sounds.invaderRespawn.play();
+        arcadeState.playSound(arcadeState.sounds.invaderRespawn);
         // Exit early to avoid falling into the game over check below.
         return;
     }

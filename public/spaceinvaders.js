@@ -151,7 +151,7 @@ function firePlayerBullet() {
       };
       playerBullets.push(bullet);
     });
-    arcadeState.sounds.shipFire.play();
+    arcadeState.playSound(arcadeState.sounds.shipFire);
   } else {
     let bullet = {
       x: spaceship.x + 0.5 - 0.05,
@@ -161,7 +161,7 @@ function firePlayerBullet() {
       vy: 10
     };
     playerBullets.push(bullet);
-    arcadeState.sounds.shipFire.play();
+    arcadeState.playSound(arcadeState.sounds.shipFire);
   }
 }
 
@@ -187,7 +187,7 @@ function spawnEnemyBulletFromGrid() {
         vy: 3 // bullet travels straight down
       };
       enemyBullets.push(bullet);
-      arcadeState.sounds.invaderFire.play();
+      arcadeState.playSound(arcadeState.sounds.invaderFire);
     }
   }
 }
@@ -271,7 +271,7 @@ function updateSpaceInvaders(deltaTime) {
         }
         enemyGroup.direction *= -1;
         enemyGroup.isDropping = true;
-        arcadeState.sounds.invaderDrop.play();
+        arcadeState.playSound(arcadeState.sounds.invaderDrop);
       }
     } else {
       enemyGroup.isDropping = false;
@@ -313,7 +313,7 @@ function updateSpaceInvaders(deltaTime) {
         enemy.alive = false;
         playerBullets.splice(i, 1);
         arcadeState.currentScore += 20;
-        arcadeState.sounds.invaderDead2.play();
+        arcadeState.playSound(arcadeState.sounds.invaderDead2);
         break; // Break out of inner loop once a collision is detected.
       }
     }
@@ -333,7 +333,7 @@ function updateSpaceInvaders(deltaTime) {
         if (checkCollision(bullet, shield)) {
           shield.health -= 1;
           playerBullets.splice(i, 1);
-          arcadeState.sounds.invaderDead.play();
+          arcadeState.playSound(arcadeState.sounds.invaderDead);
           break;
         }
       }
@@ -348,7 +348,7 @@ function updateSpaceInvaders(deltaTime) {
       if (checkCollision(bullet, shield)) {
         shield.health -= 1;
         enemyBullets.splice(i, 1);
-        arcadeState.sounds.invaderDead.play();
+        arcadeState.playSound(arcadeState.sounds.invaderDead);
         break;
       }
     }
@@ -358,7 +358,7 @@ function updateSpaceInvaders(deltaTime) {
   for (let i = 0; i < enemyBullets.length; i++) {
     let bullet = enemyBullets[i];
     if (checkCollision(bullet, spaceship) && !arcadeState.isGameOver) {
-      arcadeState.sounds.shipExplode.play();
+      arcadeState.playSound(arcadeState.sounds.shipExplode);
       gameOver(() => { initSpaceInvaders(); });
       break;
     }
@@ -368,7 +368,7 @@ function updateSpaceInvaders(deltaTime) {
   for (let i = 0; i < enemies.length; i++) {
     let enemy = enemies[i];
     if (enemy.alive && checkCollision(enemy, spaceship) && !arcadeState.isGameOver) {
-      arcadeState.sounds.shipExplode.play();
+      arcadeState.playSound(arcadeState.sounds.shipExplode);
       gameOver(() => { initSpaceInvaders(); });
       break;
     }
@@ -401,7 +401,7 @@ function updateSpaceInvaders(deltaTime) {
     playerBullets = [];
     initEnemies();
     initShields();
-    arcadeState.sounds.invaderRespawn.play();
+    arcadeState.playSound(arcadeState.sounds.invaderRespawn);
     if (arcadeState.scoreElement) {
       arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
     }

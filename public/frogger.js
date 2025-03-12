@@ -669,7 +669,7 @@ function handleFroggerInput(e) {
   frog.targetX = Math.max(0, Math.min(arcadeState.baseCols - 1, frog.targetX));
   frog.targetY = Math.max(0, frog.targetY);
 
-  arcadeState.sounds.frogJump.cloneNode(true).play();
+  arcadeState.playSound(arcadeState.sounds.frogJump);
 }
 
 // --------------------
