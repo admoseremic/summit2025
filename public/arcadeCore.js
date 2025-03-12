@@ -42,6 +42,7 @@ const arcadeState = {
     truck1: new Image(),
     truck2: new Image(),
     skinnyLog: new Image(),
+    coin: new Image()
   }
 };
 
@@ -80,6 +81,7 @@ arcadeState.images.frog.src = 'images/frog.png';
 arcadeState.images.skinnyLog.src = 'images/log-skinny.png';
 arcadeState.images.truck1.src = 'images/car1.png';
 arcadeState.images.truck2.src = 'images/car2.png';
+arcadeState.images.coin.src = 'images/coin.png';
 
 window.arcadeState = arcadeState;
 

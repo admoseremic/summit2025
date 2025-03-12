@@ -430,16 +430,16 @@ function renderRunner() {
 
   // Draw other obstacles.
   runnerState.obstacles.forEach(ob => {
-    if (["groundObstacle", "airObstacle", "bird", "coin"].includes(ob.type)) {
+    if (["groundObstacle", "airObstacle", "bird"].includes(ob.type)) {
       switch (ob.type) {
         case "groundObstacle": ctx.fillStyle = "red"; break;
         case "airObstacle": ctx.fillStyle = "orange"; break;
         case "bird": ctx.fillStyle = "purple"; break;
-        case "coin": ctx.fillStyle = "gold"; break;
         default: ctx.fillStyle = "white";
       }
       ctx.fillRect(ob.x * cellW, ob.y * cellH, (ob.width || 1) * cellW, (ob.height || 1) * cellH);
-      // Removed bird trajectory debug line.
+    } else if (["coin"].includes(ob.type)) {
+      ctx.drawImage(arcadeState.images.coin, ob.x * cellW, ob.y * cellH, (ob.width || 1) * cellW, (ob.height || 1) * cellH);
     }
   });
 
