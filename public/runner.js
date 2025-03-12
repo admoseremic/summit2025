@@ -145,6 +145,7 @@ function handleRunnerInput(e) {
     console.log("Jump triggered. Jump count:", p.jumpCount + 1);
     p.vy = BASE_JUMP_VELOCITY;
     p.jumpCount++;
+    arcadeState.playSound(arcadeState.sounds.runnerJump);
   }
 }
 
@@ -231,9 +232,9 @@ function generateObstacle() {
 function updateRunner(deltaTime) {
   // Increase speed over time.
   runnerState.speedIncreaseTimer += deltaTime;
-  if (runnerState.speedIncreaseTimer >= 5) {
+  if (runnerState.speedIncreaseTimer >= 3) {
     runnerState.speedMultiplier *= 1.1;
-    runnerState.speedIncreaseTimer -= 5;
+    runnerState.speedIncreaseTimer -= 3;
     console.log("Speed increased; multiplier =", runnerState.speedMultiplier.toFixed(2));
   }
 
@@ -446,8 +447,6 @@ function renderRunner() {
   // Draw the player.
   ctx.fillStyle = "lime";
   ctx.fillRect(runnerState.player.x * cellW, runnerState.player.y * cellH, cellW, cellH);
-
-  // Score is handled via arcadeCore's scoreboard.
 }
 
 function gameLoopRunner(timestamp) {
