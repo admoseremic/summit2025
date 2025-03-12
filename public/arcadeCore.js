@@ -38,7 +38,10 @@ const arcadeState = {
     ship: new Image(),
     enemy1: new Image(),
     ball: new Image(),
-    frog: new Image()
+    frog: new Image(),
+    truck1: new Image(),
+    truck2: new Image(),
+    skinnyLog: new Image(),
   }
 };
 
@@ -52,6 +55,7 @@ Promise.all([
   loadSound('sounds/fire.mp3').then(buffer => arcadeState.sounds.shipFire = buffer),
   loadSound('sounds/game-over.mp3').then(buffer => arcadeState.sounds.gameOver = buffer),
   loadSound('sounds/runner-jump.mp3').then(buffer => arcadeState.sounds.runnerJump = buffer),
+  loadSound('sounds/runner-coin.mp3').then(buffer => arcadeState.sounds.runnerCoin = buffer),
   loadSound('sounds/invader-drop.mp3').then(buffer => arcadeState.sounds.invaderDrop = buffer),
   loadSound('sounds/invader-ded.mp3').then(buffer => arcadeState.sounds.invaderDead = buffer),
   loadSound('sounds/invader-ded2.mp3').then(buffer => arcadeState.sounds.invaderDead2 = buffer),
@@ -72,7 +76,10 @@ arcadeState.playSound = playSound;
 arcadeState.images.ship.src = 'images/ship.png';
 arcadeState.images.enemy1.src = 'images/si_pm_1.png';
 arcadeState.images.ball.src = 'images/ball.png';
-arcadeState.images.frog.src = 'images/frog.png'
+arcadeState.images.frog.src = 'images/frog.png';
+arcadeState.images.skinnyLog.src = 'images/log-skinny.png';
+arcadeState.images.truck1.src = 'images/car1.png';
+arcadeState.images.truck2.src = 'images/car2.png';
 
 window.arcadeState = arcadeState;
 

@@ -34,6 +34,7 @@ function checkCollisions() {
       if (checkAABBCollision(playerBox, { x: ob.x, y: ob.y, width: ob.width, height: ob.height })) {
         arcadeState.currentScore += 500;
         ob.collected = true;
+        arcadeState.playSound(arcadeState.sounds.runnerCoin);
       }
     } else {
       // Any other obstacle causes game over.

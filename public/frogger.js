@@ -520,15 +520,13 @@ function renderFrogger() {
       arcadeState.ctx.fillStyle = "#555";
       arcadeState.ctx.fillRect(0, yPixel - cellH, arcadeState.canvas.width, cellH);
       if (row.truck) {
-        arcadeState.ctx.fillStyle = "red";
-        arcadeState.ctx.fillRect(row.truck.x * cellW, yPixel - cellH, row.truck.width * cellW, cellH);
+        arcadeState.ctx.drawImage(row.direction === 1 ? arcadeState.images.truck2 : arcadeState.images.truck1, row.truck.x * cellW, yPixel - cellH, row.truck.width * cellW, cellH);
       }
     } else if (row.type === "river") {
       arcadeState.ctx.fillStyle = "#3366FF";
       arcadeState.ctx.fillRect(0, yPixel - cellH, arcadeState.canvas.width, cellH);
       if (row.log) {
-        arcadeState.ctx.fillStyle = "#8B4513";
-        arcadeState.ctx.fillRect(row.log.x * cellW, yPixel - cellH, row.log.width * cellW, cellH);
+        arcadeState.ctx.drawImage(arcadeState.images.skinnyLog,row.log.x * cellW, yPixel - cellH, row.log.width * cellW, cellH);
       }
     }
   });
