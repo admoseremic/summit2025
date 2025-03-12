@@ -93,7 +93,7 @@ let friendlyFire = false;
 // The ship is positioned so its bottom is 0.5 arcade units from the bottom.
 function initSpaceship() {
   spaceship.x = (arcadeState.baseCols - spaceship.width) / 2;
-  spaceship.y = arcadeState.baseRows - spaceship.height - 0.5;
+  spaceship.y = arcadeState.baseRows - spaceship.height - 2.5;
   spaceship.targetX = spaceship.x;
 }
 
@@ -120,7 +120,7 @@ function initEnemies() {
 // Now placed on columns 1, 3, 5, and 7.
 function initShields() {
   shields = [];
-  let shieldRow = arcadeState.baseRows - 3;
+  let shieldRow = arcadeState.baseRows - 5;
   let shieldColumns = [1, 3, 5, 7]; // 0-indexed positions.
   shieldColumns.forEach(col => {
     let shield = {

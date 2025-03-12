@@ -105,14 +105,6 @@ let maxRowReached = frog.y;
 let lastDirection = 1; // starts at 1
 
 // --------------------
-// Helper: World Y to Canvas Y Conversion
-// --------------------
-function worldYToCanvasY(worldY) {
-  let cellH = arcadeState.canvas.height / arcadeState.baseRows;
-  return arcadeState.canvas.height - ((worldY - cameraY) * cellH);
-}
-
-// --------------------
 // Helper: Compute Log Snap Points
 // --------------------
 function computeLogSnapPoints(log) {
@@ -122,45 +114,6 @@ function computeLogSnapPoints(log) {
     snapPoints.push(log.x + i);
   }
   return snapPoints;
-}
-
-// --------------------
-// Horizontal Input Processing Function
-// --------------------
-function processHorizontalInput(dx) {
-  let frogRow = Math.floor(frog.y);
-  let currentRow = terrainRows.find(row => row.index === frogRow && row.type === "river");
-  if (currentRow && currentRow.log && frog.animationState === "sitting" && frog.snappedLog) {
-    let snapPts = currentRow.log.snapPoints;
-    let currentSnapIndex = snapPts.findIndex(sp => Math.abs((frog.snappedLog.x + frog.snapOffset) - sp) < 0.3);
-    if (currentSnapIndex !== -1) {
-      if (dx < 0 && currentSnapIndex > 0) {
-        frog.targetX = snapPts[currentSnapIndex - 1];
-        frog.facing = "west";
-      } else if (dx > 0 && currentSnapIndex < snapPts.length - 1) {
-        frog.targetX = snapPts[currentSnapIndex + 1];
-        frog.facing = "east";
-      } else {
-        frog.targetX = frog.x;
-      }
-    } else {
-      if (dx < 0) {
-        frog.targetX = frog.x - 1;
-        frog.facing = "west";
-      } else {
-        frog.targetX = frog.x + 1;
-        frog.facing = "east";
-      }
-    }
-  } else {
-    if (dx < 0) {
-      frog.targetX = frog.x - 1;
-      frog.facing = "west";
-    } else {
-      frog.targetX = frog.x + 1;
-      frog.facing = "east";
-    }
-  }
 }
 
 // --------------------
@@ -270,9 +223,9 @@ function initFrogger() {
   arcadeState.currentScore = 0;
 
   frog.x = 4;
-  frog.y = 2;
+  frog.y = 6;
   frog.targetX = 4;
-  frog.targetY = 2;
+  frog.targetY = 6;
   frog.facing = "north";
   frog.animationState = "sitting";
   frog.snappedLog = null;
@@ -387,7 +340,8 @@ function updateFrogger(deltaTime) {
       Math.abs(frog.y - frog.targetY) < verticalThreshold) {
       // Finalize landing.
       frog.x = frog.targetX;
-      frog.y = Math.round(frog.targetY); // ensure y aligns to a grid row
+      frog.y = Math.round(frog.targetY)
+      frog.targetY = frog.y; // ensure y aligns to a grid row
       frog.animationState = "sitting";
       let currentRow = terrainRows.find(row => row.index === Math.floor(frog.y));
       if (currentRow && currentRow.type !== "river") {
@@ -420,10 +374,6 @@ function updateFrogger(deltaTime) {
       autoScrollSpeed *= 1.1;
       autoScrollTimer -= 6;
     }
-  }
-
-  if (frog.y < cameraY) {
-    arcadeState.isGameOver = true;
   }
 
   // --- Terrain Generation ---
@@ -471,13 +421,13 @@ function updateFrogger(deltaTime) {
     }
   }
 
-// --- Scoring ---
-let currentScoreRow = Math.floor(frog.y);
-if (currentScoreRow > maxRowReached) {
-  maxRowReached = currentScoreRow;
-  arcadeState.currentScore += 50;
-  arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
-}
+  // --- Scoring ---
+  let currentScoreRow = Math.floor(frog.y);
+  if (currentScoreRow > maxRowReached) {
+    maxRowReached = currentScoreRow;
+    arcadeState.currentScore += 50;
+    arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
+  }
 
 
   // Truck collision detection.
@@ -496,7 +446,7 @@ if (currentScoreRow > maxRowReached) {
     }
   }
 
-  if (frog.y < cameraY) {
+  if (frog.y < cameraY - 1) {
     arcadeState.isGameOver = true;
   }
 
@@ -561,7 +511,7 @@ function renderFrogger() {
 
   terrainRows.forEach(row => {
     let yPixel = arcadeState.canvas.height - ((row.index - cameraY) * cellH);
-    if (yPixel + cellH < 0 || yPixel > arcadeState.canvas.height) return;
+    //if (yPixel + cellH < 0 || yPixel > arcadeState.canvas.height) return;
 
     if (row.type === "empty") {
       arcadeState.ctx.fillStyle = "#222";

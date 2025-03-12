@@ -242,15 +242,14 @@ function updateBreakout(deltaTime) {
                     arcadeState.playSound(arcadeState.sounds.ballBrick);
 
                     // Determine which side was hit.
-                    ball.vy *= -1;
-                    /*
+                    
                     let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
                     let overlapY = Math.min(ball.y + ball.height - brick.y, brick.y + brick.height - ball.y);
                     if (overlapX < overlapY) {
                         ball.vx *= -1;
                     } else {
                         ball.vy *= -1;
-                    }*/
+                    }
                     break; // Only handle one brick per update.
                 }
             }
