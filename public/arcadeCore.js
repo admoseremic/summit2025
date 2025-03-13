@@ -42,7 +42,10 @@ const arcadeState = {
     truck1: new Image(),
     truck2: new Image(),
     skinnyLog: new Image(),
-    coin: new Image()
+    coin: new Image(),
+    spike1: new Image(),
+    spike2: new Image(),
+    spike3: new Image()
   }
 };
 
@@ -61,7 +64,8 @@ Promise.all([
   loadSound('sounds/invader-ded.mp3').then(buffer => arcadeState.sounds.invaderDead = buffer),
   loadSound('sounds/invader-ded2.mp3').then(buffer => arcadeState.sounds.invaderDead2 = buffer),
   loadSound('sounds/invader-fire.mp3').then(buffer => arcadeState.sounds.invaderFire = buffer),
-  loadSound('sounds/invader-respawn.mp3').then(buffer => arcadeState.sounds.invaderRespawn = buffer)
+  loadSound('sounds/invader-respawn.mp3').then(buffer => arcadeState.sounds.invaderRespawn = buffer),
+  loadSound('sounds/swoop.mp3').then(buffer => arcadeState.sounds.swoop = buffer)
 ]);
 
 // Function to play a sound given its AudioBuffer.
@@ -82,6 +86,9 @@ arcadeState.images.skinnyLog.src = 'images/log-skinny.png';
 arcadeState.images.truck1.src = 'images/car1.png';
 arcadeState.images.truck2.src = 'images/car2.png';
 arcadeState.images.coin.src = 'images/coin.png';
+arcadeState.images.spike1.src = 'images/spike1.png';
+arcadeState.images.spike2.src = 'images/spike2.png';
+arcadeState.images.spike3.src = 'images/spike3.png';
 
 window.arcadeState = arcadeState;
 

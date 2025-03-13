@@ -142,7 +142,7 @@ function handleRunnerInput(e) {
 
   // Always apply full jump impulse if allowed.
   if (p.jumpCount < allowedJumps) {
-    console.log("Jump triggered. Jump count:", p.jumpCount + 1);
+    //console.log("Jump triggered. Jump count:", p.jumpCount + 1);
     p.vy = BASE_JUMP_VELOCITY;
     p.jumpCount++;
     arcadeState.playSound(arcadeState.sounds.runnerJump);
@@ -161,10 +161,10 @@ function generateObstacle() {
   if (type === "pit") {
     // Always store the current ground level from the last column.
     runnerState.resumeGround = runnerState.groundProfile[runnerState.groundProfile.length - 1];
-    console.log("Pit selected. Storing resumeGround =", runnerState.resumeGround);
+    //console.log("Pit selected. Storing resumeGround =", runnerState.resumeGround);
     // Set pendingPitColumns to 3 (same as before)
     runnerState.pendingPitColumns = 3;
-    console.log("Pit selected. Pending pit columns set to", runnerState.pendingPitColumns);
+    //console.log("Pit selected. Pending pit columns set to", runnerState.pendingPitColumns);
     return;
   }
 
@@ -201,6 +201,7 @@ function generateObstacle() {
       obstacle.vx = -v + currentScrollSpeed;
       obstacle.vy = v;
       obstacle.phase = "swooping";
+      arcadeState.playSound(arcadeState.sounds.swoop);
       break;
     case "elevation":
       let change = (Math.random() < 0.5) ? 1 : -1;
@@ -209,7 +210,7 @@ function generateObstacle() {
       } else {
         runnerState.resumeGround = runnerState.groundProfile[runnerState.groundProfile.length - 1];
         runnerState.pendingPitColumns = 2;
-        console.log("Elevation change not allowed; treating as pit. Pending pit columns set to", runnerState.pendingPitColumns);
+        //console.log("Elevation change not allowed; treating as pit. Pending pit columns set to", runnerState.pendingPitColumns);
         return;
       }
       return;
@@ -235,7 +236,7 @@ function updateRunner(deltaTime) {
   if (runnerState.speedIncreaseTimer >= 3) {
     runnerState.speedMultiplier *= 1.1;
     runnerState.speedIncreaseTimer -= 3;
-    console.log("Speed increased; multiplier =", runnerState.speedMultiplier.toFixed(2));
+    //console.log("Speed increased; multiplier =", runnerState.speedMultiplier.toFixed(2));
   }
 
   const moveDist = runnerState.terrainSpeed * runnerState.speedMultiplier * deltaTime;
@@ -278,7 +279,7 @@ function updateRunner(deltaTime) {
   while (runnerState.groundOffset >= 1) {
     runnerState.groundOffset -= 1;
     const removed = runnerState.groundProfile.shift();
-    console.log("Removed ground column:", removed);
+    //console.log("Removed ground column:", removed);
     let newColumn;
     if (runnerState.pendingPitColumns > 0) {
       // If bridges mechanic is active, generate a bridge column;
@@ -292,7 +293,7 @@ function updateRunner(deltaTime) {
       // When pit columns finish, resume ground level.
       if (runnerState.pendingPitColumns === 0 && runnerState.resumeGround !== undefined) {
         newColumn = runnerState.resumeGround;
-        console.log("Resuming ground level at:", newColumn);
+        //console.log("Resuming ground level at:", newColumn);
         runnerState.resumeGround = undefined;
       }
     } else if (runnerState.pendingElevationChange !== 0) {
@@ -300,11 +301,11 @@ function updateRunner(deltaTime) {
       last = Math.max(2, Math.min(10, last + runnerState.pendingElevationChange));
       runnerState.pendingElevationChange = 0;
       newColumn = last;
-      console.log("Generated elevated ground column:", newColumn);
+      //console.log("Generated elevated ground column:", newColumn);
     } else {
       let last = runnerState.groundProfile[runnerState.groundProfile.length - 1];
       newColumn = last;
-      console.log("Generated ground column:", newColumn);
+      //console.log("Generated ground column:", newColumn);
     }
     arcadeState.currentScore += 10;
     runnerState.groundProfile.push(newColumn);
@@ -410,37 +411,38 @@ function renderRunner() {
     ctx.fillRect(colX, groundTop * cellH, cellW, gHeight * cellH);
   }
 
-  // Draw pits.
   runnerState.obstacles.forEach(ob => {
-    if (ob.type === "pit") {
-      const colX = ob.x * cellW;
-      ctx.clearRect(colX, 0, ob.width * cellW, arcadeState.canvas.height);
-    }
-  });
+    // Precompute common values.
+    const colX = ob.x * cellW;
+    const colY = ob.y * cellH;
+    const width = (ob.width || 1) * cellW;
+    const height = (ob.height || 1) * cellH;
 
-  // Draw bridges obstacles (if any exist as obstacles).
-  runnerState.obstacles.forEach(ob => {
-    if (ob.type === "bridge") {
-      const colX = ob.x * cellW;
-      const lastGround = runnerState.groundProfile[runnerState.groundProfile.length - 1] || 5;
-      const groundTop = arcadeState.baseRows - lastGround;
-      ctx.fillStyle = "#A0522D";
-      ctx.fillRect(colX, groundTop * cellH, ob.width * cellW, lastGround * cellH);
-    }
-  });
-
-  // Draw other obstacles.
-  runnerState.obstacles.forEach(ob => {
-    if (["groundObstacle", "airObstacle", "bird"].includes(ob.type)) {
-      switch (ob.type) {
-        case "groundObstacle": ctx.fillStyle = "red"; break;
-        case "airObstacle": ctx.fillStyle = "orange"; break;
-        case "bird": ctx.fillStyle = "purple"; break;
-        default: ctx.fillStyle = "white";
+    switch (ob.type) {
+      case "pit":
+        ctx.clearRect(colX, 0, width, arcadeState.canvas.height);
+        break;
+      case "bridge": {
+        const lastGround = runnerState.groundProfile[runnerState.groundProfile.length - 1] || 5;
+        const groundTop = arcadeState.baseRows - lastGround;
+        ctx.fillStyle = "#A0522D";
+        ctx.fillRect(colX, groundTop * cellH, width, lastGround * cellH);
+        break;
       }
-      ctx.fillRect(ob.x * cellW, ob.y * cellH, (ob.width || 1) * cellW, (ob.height || 1) * cellH);
-    } else if (["coin"].includes(ob.type)) {
-      ctx.drawImage(arcadeState.images.coin, ob.x * cellW, ob.y * cellH, (ob.width || 1) * cellW, (ob.height || 1) * cellH);
+      case "groundObstacle":
+        ctx.drawImage(arcadeState.images.spike1, colX - width / 2, colY + height - height * 2, width * 2, height * 2);
+        break;
+      case "airObstacle":
+        ctx.drawImage(arcadeState.images.spike2, colX - width / 2, colY + height - height * 2, width * 2, height * 2);
+        break;
+      case "bird":
+        ctx.drawImage(arcadeState.images.spike3, colX - width / 2, colY + height - height * 2, width * 2, height * 2);
+        break;
+      case "coin":
+        ctx.drawImage(arcadeState.images.coin, colX, colY, width, height);
+        break;
+      default:
+        break;
     }
   });
 
@@ -468,7 +470,7 @@ function listenToRunnerMechanics() {
       bridges: !!val.bridges,
       coins: !!val.coins,
     };
-    console.log("Runner mechanics updated:", runnerState.mechanics);
+    //console.log("Runner mechanics updated:", runnerState.mechanics);
   });
 }
 
