@@ -463,11 +463,12 @@ function renderSpaceInvaders() {
   arcadeState.ctx.fillStyle = "blue";
   for (let i = 0; i < shields.length; i++) {
     let shield = shields[i];
-    arcadeState.ctx.fillRect(shield.x * cellW, shield.y * cellH, shield.width * cellW, shield.height * cellH);
+    arcadeState.ctx.drawImage(arcadeState.images.workspace,shield.x * cellW, shield.y * cellH, shield.width * cellW, shield.height * cellH);
+    //arcadeState.ctx.fillRect(shield.x * cellW, shield.y * cellH, shield.width * cellW, shield.height * cellH);
     arcadeState.ctx.fillStyle = "white";
     arcadeState.ctx.font = "8px Arial";
     arcadeState.ctx.fillText(shield.health, shield.x * cellW + 2, (shield.y + shield.height / 2) * cellH);
-    arcadeState.ctx.fillStyle = "blue";
+    //arcadeState.ctx.fillStyle = "blue";
   }
 }
 

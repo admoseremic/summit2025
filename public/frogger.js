@@ -425,7 +425,7 @@ function updateFrogger(deltaTime) {
   let currentScoreRow = Math.floor(frog.y);
   if (currentScoreRow > maxRowReached) {
     maxRowReached = currentScoreRow;
-    arcadeState.currentScore += 50;
+    arcadeState.currentScore += 100;
     arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
   }
 

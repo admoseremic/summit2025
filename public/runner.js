@@ -37,8 +37,9 @@ function checkCollisions() {
         arcadeState.playSound(arcadeState.sounds.runnerCoin);
       }
     } else {
-      // Any other obstacle causes game over.
+      // On collision with any non-coin obstacle, set player state to "hit" and then trigger game over.
       if (checkAABBCollision(playerBox, { x: ob.x, y: ob.y, width: ob.width, height: ob.height })) {
+        runnerState.player.state = "hit";
         gameOver(() => { initRunner(); });
         return;
       }
@@ -56,6 +57,11 @@ function initRunner() {
       y: 0,         // Will be set based on ground
       vy: 0,
       jumpCount: 0,
+      // Animation properties:
+      state: "run",       // "run", "jump", "fall", or "hit"
+      frameIndex: 0,
+      frameTimer: 0,
+      frameDuration: 100  // milliseconds per frame
     },
     // Ground system: fixed array of exactly 10 columns (9 on-screen + 1 off-screen to the right)
     groundProfile: [],
@@ -142,7 +148,6 @@ function handleRunnerInput(e) {
 
   // Always apply full jump impulse if allowed.
   if (p.jumpCount < allowedJumps) {
-    //console.log("Jump triggered. Jump count:", p.jumpCount + 1);
     p.vy = BASE_JUMP_VELOCITY;
     p.jumpCount++;
     arcadeState.playSound(arcadeState.sounds.runnerJump);
@@ -157,17 +162,11 @@ function generateObstacle() {
   let type = types[Math.floor(Math.random() * types.length)];
   let spawnX = arcadeState.baseCols + randomRange(0, 1);
 
-  // For pits: if bridges mechanic is active, generate a bridge column (only one column).
   if (type === "pit") {
-    // Always store the current ground level from the last column.
     runnerState.resumeGround = runnerState.groundProfile[runnerState.groundProfile.length - 1];
-    //console.log("Pit selected. Storing resumeGround =", runnerState.resumeGround);
-    // Set pendingPitColumns to 3 (same as before)
     runnerState.pendingPitColumns = 3;
-    //console.log("Pit selected. Pending pit columns set to", runnerState.pendingPitColumns);
     return;
   }
-
 
   let obstacle = { type, x: spawnX, awarded: false };
   let currentGround = runnerState.groundProfile[runnerState.groundProfile.length - 1] || 5;
@@ -210,18 +209,13 @@ function generateObstacle() {
       } else {
         runnerState.resumeGround = runnerState.groundProfile[runnerState.groundProfile.length - 1];
         runnerState.pendingPitColumns = 2;
-        //console.log("Elevation change not allowed; treating as pit. Pending pit columns set to", runnerState.pendingPitColumns);
         return;
       }
       return;
     case "coin":
       obstacle.width = 1;
       obstacle.height = 1;
-      if (Math.random() < 0.5) {
-        obstacle.y = arcadeState.baseRows - currentGround - 1;
-      } else {
-        obstacle.y = arcadeState.baseRows - currentGround - 2;
-      }
+      obstacle.y = arcadeState.baseRows - currentGround - (Math.random() < 0.5 ? 1 : 2);
       break;
     default:
       break;
@@ -236,7 +230,6 @@ function updateRunner(deltaTime) {
   if (runnerState.speedIncreaseTimer >= 3) {
     runnerState.speedMultiplier *= 1.1;
     runnerState.speedIncreaseTimer -= 3;
-    //console.log("Speed increased; multiplier =", runnerState.speedMultiplier.toFixed(2));
   }
 
   const moveDist = runnerState.terrainSpeed * runnerState.speedMultiplier * deltaTime;
@@ -245,7 +238,6 @@ function updateRunner(deltaTime) {
   runnerState.terrainOffset += moveDist;
   while (runnerState.terrainOffset >= runnerState.nextObstacleDistance) {
     runnerState.terrainOffset -= runnerState.nextObstacleDistance;
-    // Fixed nextObstacleDistance value of 6.
     runnerState.nextObstacleDistance = 6;
     generateObstacle();
   }
@@ -278,8 +270,7 @@ function updateRunner(deltaTime) {
   runnerState.groundOffset += moveDist;
   while (runnerState.groundOffset >= 1) {
     runnerState.groundOffset -= 1;
-    const removed = runnerState.groundProfile.shift();
-    //console.log("Removed ground column:", removed);
+    runnerState.groundProfile.shift();
     let newColumn;
     if (runnerState.pendingPitColumns > 0) {
       // If bridges mechanic is active, generate a bridge column;
@@ -290,10 +281,8 @@ function updateRunner(deltaTime) {
         newColumn = 0;
       }
       runnerState.pendingPitColumns--;
-      // When pit columns finish, resume ground level.
       if (runnerState.pendingPitColumns === 0 && runnerState.resumeGround !== undefined) {
         newColumn = runnerState.resumeGround;
-        //console.log("Resuming ground level at:", newColumn);
         runnerState.resumeGround = undefined;
       }
     } else if (runnerState.pendingElevationChange !== 0) {
@@ -301,19 +290,15 @@ function updateRunner(deltaTime) {
       last = Math.max(2, Math.min(10, last + runnerState.pendingElevationChange));
       runnerState.pendingElevationChange = 0;
       newColumn = last;
-      //console.log("Generated elevated ground column:", newColumn);
     } else {
       let last = runnerState.groundProfile[runnerState.groundProfile.length - 1];
       newColumn = last;
-      //console.log("Generated ground column:", newColumn);
     }
     arcadeState.currentScore += 10;
     runnerState.groundProfile.push(newColumn);
   }
 
-
-
-  // Apply constant gravity and update vertical position.
+  // Apply gravity and update vertical position.
   runnerState.player.vy -= GRAVITY * deltaTime;
   runnerState.player.y -= runnerState.player.vy * deltaTime;
 
@@ -326,10 +311,9 @@ function updateRunner(deltaTime) {
   const hrX = player.x + 1, hrY = player.y + 0.5;
   const colIndex = Math.floor(runnerState.groundOffset + hrX);
   let groundHeight = runnerState.groundProfile[colIndex] || 0;
-  // Use absolute value if this is a bridge column.
   const effGround = groundHeight < 0 ? -groundHeight : groundHeight;
   const groundTop = arcadeState.baseRows - effGround;
-  if (groundHeight > 0 || groundHeight < 0) {
+  if (groundHeight !== 0) {
     if (hrY >= groundTop) {
       player.x = (colIndex - runnerState.groundOffset) - 1;
     }
@@ -352,14 +336,8 @@ function updateRunner(deltaTime) {
   const standingLeft = (bottomLeftY >= groundTopLeft);
   const standingRight = (bottomRightY >= groundTopRight);
   if (standingLeft || standingRight) {
-    let chosenGround;
-    if (standingLeft && standingRight) {
-      chosenGround = Math.max(groundTopLeft, groundTopRight);
-    } else if (standingLeft) {
-      chosenGround = groundTopLeft;
-    } else {
-      chosenGround = groundTopRight;
-    }
+    let chosenGround = standingLeft && standingRight ? Math.max(groundTopLeft, groundTopRight)
+      : (standingLeft ? groundTopLeft : groundTopRight);
     player.y = chosenGround - 1;
     player.vy = 0;
     player.jumpCount = 0;
@@ -374,6 +352,7 @@ function updateRunner(deltaTime) {
   if (player.x <= 0 ||
     player.x + 1 >= arcadeState.baseCols ||
     player.y + 1 >= arcadeState.baseRows) {
+    runnerState.player.state = "hit";
     gameOver(() => { initRunner(); });
     return;
   }
@@ -383,7 +362,37 @@ function updateRunner(deltaTime) {
   }
 
   runnerState.prevPlayerGround = Math.max(effGhLeft, effGhRight);
+
+  // Update player's animation state based on vertical velocity (if not already in "hit" state).
+  if (!arcadeState.isGameOver && player.state !== "hit") {
+    if (player.vy > 0) {
+      player.state = "jump";
+    } else if (player.vy < 0) {
+      player.state = "fall";
+    } else {
+      player.state = "run";
+    }
+  }
 }
+
+// Function to update player animation frame.
+function updatePlayerAnimation(deltaTime) {
+  const player = runnerState.player;
+  const animFrames = arcadeState.images.player[player.state];
+  if (!animFrames || animFrames.length === 0) return;
+
+  // Ensure frameIndex is within bounds.
+  if (player.frameIndex >= animFrames.length) {
+    player.frameIndex = 0;
+  }
+
+  player.frameTimer += deltaTime * 1000; // Convert seconds to ms.
+  if (player.frameTimer >= player.frameDuration) {
+    player.frameIndex = (player.frameIndex + 1) % animFrames.length;
+    player.frameTimer = 0;
+  }
+}
+
 
 function renderRunner() {
   const ctx = arcadeState.ctx;
@@ -400,10 +409,9 @@ function renderRunner() {
     let gHeight = runnerState.groundProfile[i];
     let groundTop;
     if (gHeight < 0) {
-      // Bridge column: absolute value is the resume ground level.
       groundTop = arcadeState.baseRows - (-gHeight);
-      gHeight = 1; // Bridge is 1 unit high.
-      ctx.fillStyle = "#C68642"; // Lighter brown for bridges.
+      gHeight = 1;
+      ctx.fillStyle = "#C68642";
     } else {
       groundTop = arcadeState.baseRows - gHeight;
       ctx.fillStyle = "#654321";
@@ -412,7 +420,6 @@ function renderRunner() {
   }
 
   runnerState.obstacles.forEach(ob => {
-    // Precompute common values.
     const colX = ob.x * cellW;
     const colY = ob.y * cellH;
     const width = (ob.width || 1) * cellW;
@@ -446,9 +453,16 @@ function renderRunner() {
     }
   });
 
-  // Draw the player.
-  ctx.fillStyle = "lime";
-  ctx.fillRect(runnerState.player.x * cellW, runnerState.player.y * cellH, cellW, cellH);
+  // Draw the player using the appropriate animation frame.
+  const p = runnerState.player;
+  const animFrames = arcadeState.images.player[p.state];
+  if (animFrames && animFrames.length > 0) {
+    const currentFrame = animFrames[p.frameIndex];
+    ctx.drawImage(currentFrame, p.x * cellW, p.y * cellH, cellW, cellH);
+  } else {
+    ctx.fillStyle = "lime";
+    ctx.fillRect(p.x * cellW, p.y * cellH, cellW, cellH);
+  }
 }
 
 function gameLoopRunner(timestamp) {
@@ -456,6 +470,7 @@ function gameLoopRunner(timestamp) {
   const deltaTime = (timestamp - arcadeState.previousTimestamp) / 1000;
   arcadeState.previousTimestamp = timestamp;
   updateRunner(deltaTime);
+  updatePlayerAnimation(deltaTime);
   renderRunner();
   arcadeState.animationFrameId = requestAnimationFrame(gameLoopRunner);
 }
@@ -470,7 +485,6 @@ function listenToRunnerMechanics() {
       bridges: !!val.bridges,
       coins: !!val.coins,
     };
-    //console.log("Runner mechanics updated:", runnerState.mechanics);
   });
 }
 

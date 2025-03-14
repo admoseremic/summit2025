@@ -45,7 +45,8 @@ const arcadeState = {
     coin: new Image(),
     spike1: new Image(),
     spike2: new Image(),
-    spike3: new Image()
+    spike3: new Image(),
+    workspace: new Image()
   }
 };
 
@@ -89,6 +90,34 @@ arcadeState.images.coin.src = 'images/coin.png';
 arcadeState.images.spike1.src = 'images/spike1.png';
 arcadeState.images.spike2.src = 'images/spike2.png';
 arcadeState.images.spike3.src = 'images/spike3.png';
+arcadeState.images.workspace.src = 'images/workspace.png';
+
+// --- Player Animation Assets ---
+// We keep the runner player's sprites in their own object.
+arcadeState.images.player = {
+  run: [],    // three running frames
+  jump: [],   // one jump-up frame
+  fall: [],   // one fall-down frame
+  hit: []     // one obstacle-hit (game over) frame
+};
+
+for (let i = 0; i < 3; i++) {
+  const runImg = new Image();
+  runImg.src = `images/runner${i}.png`;
+  arcadeState.images.player.run.push(runImg);
+}
+
+const jumpImg = new Image();
+jumpImg.src = 'images/runner-jump.png';
+arcadeState.images.player.jump.push(jumpImg);
+
+const fallImg = new Image();
+fallImg.src = 'images/runner-fall.png';
+arcadeState.images.player.fall.push(fallImg);
+
+const hitImg = new Image();
+hitImg.src = 'images/runner-hit.png';
+arcadeState.images.player.hit.push(hitImg);
 
 window.arcadeState = arcadeState;
 
@@ -113,41 +142,49 @@ function gameOver(restartCallback) {
   arcadeState.isGameOver = true;
   arcadeState.playSound(arcadeState.sounds.gameOver);
   stopGame();
-
-  // Use greater-than-or-equal-to check for ties
   submitCurrentScore();
 
-  arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
-  arcadeState.ctx.fillStyle = 'white';
-  arcadeState.ctx.font = '40px "Press Start 2P"';
-  arcadeState.ctx.textAlign = 'center';
-  arcadeState.ctx.fillText('Game Over', arcadeState.canvas.width / 2, arcadeState.canvas.height / 2 - 20);
+  // Use setTimeout with 0 delay to ensure this runs after the current render cycle.
+  setTimeout(() => {
+    // Draw overlay so the last game frame is visible underneath.
+    arcadeState.ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+    arcadeState.ctx.fillRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
 
-  const tryAgainButton = document.createElement('button');
-  tryAgainButton.id = 'tryagain';
-  tryAgainButton.innerText = 'Try Again';
-  Object.assign(tryAgainButton.style, {
-    position: 'absolute',
-    left: '50%',
-    top: '60%',
-    transform: 'translate(-50%, -50%)',
-    backgroundColor: '#000',
-    color: '#fff',
-    fontFamily: '"Press Start 2P", monospace, sans-serif',
-    fontSize: '16px',
-    padding: '10px 20px',
-    border: '4px solid white',
-    cursor: 'pointer',
-    zIndex: 9999
-  });
+    // Draw "Game Over" text.
+    arcadeState.ctx.fillStyle = "white";
+    arcadeState.ctx.font = '40px "Press Start 2P"';
+    arcadeState.ctx.textAlign = "center";
+    arcadeState.ctx.fillText("Game Over", arcadeState.canvas.width / 2, arcadeState.canvas.height / 2 - 20);
 
-  tryAgainButton.onclick = () => {
-    document.body.removeChild(tryAgainButton);
-    restartCallback();
-  };
+    // Create the try again button.
+    const tryAgainButton = document.createElement("button");
+    tryAgainButton.id = "tryagain";
+    tryAgainButton.innerText = "Try Again";
+    Object.assign(tryAgainButton.style, {
+      position: "absolute",
+      left: "50%",
+      top: "60%",
+      transform: "translate(-50%, -50%)",
+      backgroundColor: "#000",
+      color: "#fff",
+      fontFamily: '"Press Start 2P", monospace, sans-serif',
+      fontSize: "16px",
+      padding: "10px 20px",
+      border: "4px solid white",
+      cursor: "pointer",
+      zIndex: 9999
+    });
 
-  document.body.appendChild(tryAgainButton);
+    tryAgainButton.onclick = () => {
+      document.body.removeChild(tryAgainButton);
+      restartCallback();
+    };
+
+    document.body.appendChild(tryAgainButton);
+  }, 0);
 }
+
+
 
 /*************************************************************
  * loadGame(gameName)
@@ -362,7 +399,6 @@ function createScoreboardElements() {
 
   // Start observing the score element.
   scoreObserver.observe(arcadeState.scoreElement, observerConfig);
-
 }
 
 function styleScoreElement(el) {
@@ -444,7 +480,6 @@ function listenForGameChanges() {
       });
   });
 }
-
 
 function showTitleScreen(title, onStart) {
   const overlay = document.createElement('div');
