@@ -33,12 +33,26 @@ function initFirebase() {
 function listenForLeaderboardGame() {
   db.ref('leaderboardGame').on('value', snapshot => {
     const game = snapshot.val();
+    currentGame = game;
     if (game) {
-      currentGame = game;
-      if (currentGame === 'showCumulativeScore') {
-        document.getElementById('leaderboardTitle').innerText = 'Cumulative Score';
-      } else {
-        document.getElementById('leaderboardTitle').innerText = capitalize(currentGame);
+      switch (game) {
+        case "showCumulativeScore":
+          document.getElementById('leaderboardTitle').innerText = 'Cumulative score!';
+          break;
+        case "breakout":
+          document.getElementById('leaderboardTitle').innerText = 'Breakout!';
+          break;
+        case "frogger":
+          document.getElementById('leaderboardTitle').innerText = 'Frogger!';
+          break;
+        case "spaceinvaders":
+          document.getElementById('leaderboardTitle').innerText = 'Invaders!';
+          break;
+        case "runner":
+          document.getElementById('leaderboardTitle').innerText = 'Runner!';
+          break;
+        default:
+          break;
       }
       updateLeaderboard(); // Immediate update on game change.
     }

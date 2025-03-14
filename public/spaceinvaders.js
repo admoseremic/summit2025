@@ -23,6 +23,8 @@
  *   When the formation reaches an edge (its right edge ≥ baseCols - 0.5 when moving right or its left edge ≤ 0.5 when moving left),
  *   the formation drops 0.5 arcade units once and then reverses direction.
  * - The enemy speed increases by 10% every 5 seconds and is preserved upon respawn.
+ * - Invaders animate between two images ("a" and "b") every second.
+ *   Bottom two rows use invader type 1, the next two rows invader type 2, and the top row invader type 3.
  * 
  * Bullets:
  * - Player bullets travel upward at 10 units/sec.
@@ -62,9 +64,7 @@ let playerBullets = [];
 
 // Enemy bullet array
 let enemyBullets = [];
-
-// Enemies: stored as an array; the formation moves as a unit.
-let enemies = [];
+let enemies = []; // enemy objects will include an "invaderType" property.
 let enemyGroup = {
   direction: 1,         // 1 for right, -1 for left
   speed: 0.25,          // initial horizontal speed (arcade units/sec)
@@ -85,6 +85,9 @@ let infiniteShooting = false;
 let doubleShot = false;
 let friendlyFire = false;
 
+// For invader animation:
+let invaderAnimTimer = 0;
+let invaderAnimState = "a"; // toggles between "a" and "b"
 
 
 // --- Initialization Functions ---
@@ -98,18 +101,23 @@ function initSpaceship() {
 }
 
 // Initialize enemy formation (grid 7 wide by 5 deep, top row at row 1)
+// Assign invaderType based on row:
+// - Top row (row 0): type 3
+// - Next two rows (row 1 and 2): type 2
+// - Bottom two rows (row 3 and 4): type 1
 function initEnemies() {
   enemies = [];
   // Formation grid: 5 rows x 7 columns.
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 7; col++) {
       let enemy = {
-        // Position enemies starting at x = 1 and y = 1.
         x: 1 + col,
         y: 1 + row,
         width: 0.9,
         height: 0.9,
-        alive: true
+        alive: true,
+        // Determine invaderType based on row:
+        invaderType: row === 0 ? 3 : (row < 3 ? 2 : 1)
       };
       enemies.push(enemy);
     }
@@ -121,7 +129,7 @@ function initEnemies() {
 function initShields() {
   shields = [];
   let shieldRow = arcadeState.baseRows - 5;
-  let shieldColumns = [1, 3, 5, 7]; // 0-indexed positions.
+  let shieldColumns = [1, 3, 5, 7];
   shieldColumns.forEach(col => {
     let shield = {
       x: col,
@@ -147,7 +155,7 @@ function firePlayerBullet() {
         y: spaceship.y,
         width: 0.1,
         height: 0.2,
-        vy: 10 // upward speed (arcade units/sec)
+        vy: 10
       };
       playerBullets.push(bullet);
     });
@@ -184,7 +192,7 @@ function spawnEnemyBulletFromGrid() {
         width: 0.1,
         height: 0.2,
         vx: 0,
-        vy: 3 // bullet travels straight down
+        vy: 3
       };
       enemyBullets.push(bullet);
       arcadeState.playSound(arcadeState.sounds.invaderFire);
@@ -208,26 +216,20 @@ function handleSpaceInvadersInput(e) {
   let targetX = (((clientX - rect.left) / arcadeState.canvas.width) * arcadeState.baseCols) - spaceship.width / 2;
   targetX = Math.max(0, Math.min(arcadeState.baseCols - spaceship.width, targetX));
   spaceship.targetX = targetX;
-
-  // Also fire a bullet when tapped.
   firePlayerBullet();
 }
 
 // --- Update Functions ---
 
 function updateSpaceInvaders(deltaTime) {
-  // Update spaceship horizontal movement.
+  // Update spaceship movement.
   let dx = spaceship.targetX - spaceship.x;
   if (Math.abs(dx) > 0.001) {
     let step = 10 * deltaTime;
-    if (Math.abs(dx) < step) {
-      spaceship.x = spaceship.targetX;
-    } else {
-      spaceship.x += step * Math.sign(dx);
-    }
+    spaceship.x = Math.abs(dx) < step ? spaceship.targetX : spaceship.x + step * Math.sign(dx);
   }
 
-  // Update player bullets (move upward).
+  // Update player bullets.
   for (let i = playerBullets.length - 1; i >= 0; i--) {
     let bullet = playerBullets[i];
     bullet.y -= bullet.vy * deltaTime;
@@ -236,7 +238,7 @@ function updateSpaceInvaders(deltaTime) {
     }
   }
 
-  // Update enemy bullets (move using their vx and vy).
+  // Update enemy bullets.
   for (let i = enemyBullets.length - 1; i >= 0; i--) {
     let bullet = enemyBullets[i];
     bullet.x += bullet.vx * deltaTime;
@@ -249,40 +251,32 @@ function updateSpaceInvaders(deltaTime) {
   }
 
   // --- Enemy Formation Movement ---
-  let aliveEnemies = [];
-  for (let i = 0; i < enemies.length; i++) {
-    if (enemies[i].alive) aliveEnemies.push(enemies[i]);
-  }
+  let aliveEnemies = enemies.filter(enemy => enemy.alive);
   if (aliveEnemies.length > 0) {
-    let formationLeft = Infinity;
-    let formationRight = -Infinity;
-    for (let i = 0; i < aliveEnemies.length; i++) {
-      let enemy = aliveEnemies[i];
+    let formationLeft = Infinity, formationRight = -Infinity;
+    aliveEnemies.forEach(enemy => {
       formationLeft = Math.min(formationLeft, enemy.x);
       formationRight = Math.max(formationRight, enemy.x + enemy.width);
-    }
-    // Check if the formation has reached an edge.
+    });
     if ((enemyGroup.direction > 0 && formationRight >= arcadeState.baseCols - 0.5) ||
       (enemyGroup.direction < 0 && formationLeft <= 0.5)) {
       if (!enemyGroup.isDropping) {
-        // Drop formation by 0.5 arcade units once and reverse direction.
-        for (let i = 0; i < aliveEnemies.length; i++) {
-          aliveEnemies[i].y += 0.5;
-        }
+        aliveEnemies.forEach(enemy => {
+          enemy.y += 0.5;
+        });
         enemyGroup.direction *= -1;
         enemyGroup.isDropping = true;
         arcadeState.playSound(arcadeState.sounds.invaderDrop);
       }
     } else {
       enemyGroup.isDropping = false;
-      // Move formation horizontally.
-      for (let i = 0; i < aliveEnemies.length; i++) {
-        aliveEnemies[i].x += enemyGroup.speed * enemyGroup.direction * deltaTime;
-      }
+      aliveEnemies.forEach(enemy => {
+        enemy.x += enemyGroup.speed * enemyGroup.direction * deltaTime;
+      });
     }
   }
 
-  // Increase enemy group speed every 5 seconds (10% increase).
+  // Increase enemy speed every 5 seconds.
   enemySpeedTimer += deltaTime;
   if (enemySpeedTimer >= 5) {
     enemyGroup.speed *= 1.1;
@@ -302,9 +296,16 @@ function updateSpaceInvaders(deltaTime) {
     enemyFireRateTimer -= 5;
   }
 
+  // --- Invader Animation Update ---
+  invaderAnimTimer += deltaTime;
+  if (invaderAnimTimer >= 0.6) {
+    invaderAnimTimer -= 0.6;
+    invaderAnimState = invaderAnimState === "a" ? "b" : "a";
+  }
+
   // --- Collision Detection ---
 
-  // Player bullet vs. enemy (optimized with nested loops)
+  // Player bullet vs. enemy.
   for (let i = playerBullets.length - 1; i >= 0; i--) {
     let bullet = playerBullets[i];
     for (let j = 0; j < enemies.length; j++) {
@@ -314,7 +315,7 @@ function updateSpaceInvaders(deltaTime) {
         playerBullets.splice(i, 1);
         arcadeState.currentScore += 20;
         arcadeState.playSound(arcadeState.sounds.invaderDead2);
-        break; // Break out of inner loop once a collision is detected.
+        break;
       }
     }
   }
@@ -382,26 +383,24 @@ function updateSpaceInvaders(deltaTime) {
         let shield = shields[j];
         if (checkCollision(enemy, shield)) {
           enemy.alive = false;
-          shield.health -= 1;
+          shield.health -= 2;
           break;
         }
       }
     }
   }
 
-  // Remove shields that have no health.
+  // Remove shields with no health.
   shields = shields.filter(shield => shield.health > 0);
 
   // When all enemies are cleared, respawn them.
-  let remainingEnemies = 0;
-  for (let i = 0; i < enemies.length; i++) {
-    if (enemies[i].alive) remainingEnemies++;
-  }
+  let remainingEnemies = enemies.filter(enemy => enemy.alive).length;
   if (remainingEnemies === 0) {
     playerBullets = [];
     initEnemies();
     initShields();
     arcadeState.playSound(arcadeState.sounds.invaderRespawn);
+    enemyGroup.speed *= 1.1;
     if (arcadeState.scoreElement) {
       arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
     }
@@ -433,43 +432,50 @@ function renderSpaceInvaders() {
 
   // Render player bullets.
   arcadeState.ctx.fillStyle = "white";
-  for (let i = 0; i < playerBullets.length; i++) {
-    let bullet = playerBullets[i];
+  playerBullets.forEach(bullet => {
     arcadeState.ctx.fillRect(bullet.x * cellW, bullet.y * cellH, bullet.width * cellW, bullet.height * cellH);
-  }
+  });
 
   // Render enemy bullets.
   arcadeState.ctx.fillStyle = "yellow";
-  for (let i = 0; i < enemyBullets.length; i++) {
-    let bullet = enemyBullets[i];
+  enemyBullets.forEach(bullet => {
     arcadeState.ctx.fillRect(bullet.x * cellW, bullet.y * cellH, bullet.width * cellW, bullet.height * cellH);
-  }
+  });
 
-  // Render enemies.
-  for (let i = 0; i < enemies.length; i++) {
-    let enemy = enemies[i];
+  // Render enemies using animated invader sprites.
+  enemies.forEach(enemy => {
     if (enemy.alive) {
+      let invaderImage;
+      if (enemy.invaderType === 1) {
+        invaderImage = (invaderAnimState === "a") ? arcadeState.images.invader1a : arcadeState.images.invader1b;
+      } else if (enemy.invaderType === 2) {
+        invaderImage = (invaderAnimState === "a") ? arcadeState.images.invader2a : arcadeState.images.invader2b;
+      } else if (enemy.invaderType === 3) {
+        invaderImage = (invaderAnimState === "a") ? arcadeState.images.invader3a : arcadeState.images.invader3b;
+      }
       arcadeState.ctx.drawImage(
-        arcadeState.images.enemy1,
+        invaderImage,
         enemy.x * cellW,
         enemy.y * cellH,
         enemy.width * cellW,
         enemy.height * cellH
       );
     }
-  }
+  });
 
   // Render shields.
-  arcadeState.ctx.fillStyle = "blue";
-  for (let i = 0; i < shields.length; i++) {
-    let shield = shields[i];
-    arcadeState.ctx.drawImage(arcadeState.images.workspace,shield.x * cellW, shield.y * cellH, shield.width * cellW, shield.height * cellH);
-    //arcadeState.ctx.fillRect(shield.x * cellW, shield.y * cellH, shield.width * cellW, shield.height * cellH);
+  shields.forEach(shield => {
+    arcadeState.ctx.drawImage(
+      arcadeState.images.workspace,
+      shield.x * cellW,
+      shield.y * cellH,
+      shield.width * cellW,
+      shield.height * cellH
+    );
     arcadeState.ctx.fillStyle = "white";
     arcadeState.ctx.font = "8px Arial";
     arcadeState.ctx.fillText(shield.health, shield.x * cellW + 2, (shield.y + shield.height / 2) * cellH);
-    //arcadeState.ctx.fillStyle = "blue";
-  }
+  });
 }
 
 // --- Game Loop ---
@@ -522,6 +528,9 @@ function initSpaceInvaders() {
 
   // Listen for Firebase mechanics updates.
   listenToSpaceInvadersMechanics();
+  if (arcadeState.scoreElement) {
+    arcadeState.scoreElement.innerText = 'Score: ' + arcadeState.currentScore;
+  }
 }
 
 // --- Start Space Invaders ---
