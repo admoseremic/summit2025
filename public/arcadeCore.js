@@ -46,7 +46,13 @@ const arcadeState = {
     spike1: new Image(),
     spike2: new Image(),
     spike3: new Image(),
-    workspace: new Image()
+    workspace: new Image(),
+    invader1a: new Image(),
+    invader1b: new Image(),
+    invader2a: new Image(),
+    invader2b: new Image(),
+    invader3a: new Image(),
+    invader3b: new Image()
   }
 };
 
@@ -91,6 +97,13 @@ arcadeState.images.spike1.src = 'images/spike1.png';
 arcadeState.images.spike2.src = 'images/spike2.png';
 arcadeState.images.spike3.src = 'images/spike3.png';
 arcadeState.images.workspace.src = 'images/workspace.png';
+arcadeState.images.invader1a.src = 'images/invader1a.png';
+arcadeState.images.invader1b.src = 'images/invader1b.png';
+arcadeState.images.invader2a.src = 'images/invader2a.png';
+arcadeState.images.invader2b.src = 'images/invader2b.png';
+arcadeState.images.invader3a.src = 'images/invader3a.png';
+arcadeState.images.invader3b.src = 'images/invader3b.png';
+
 
 // --- Player Animation Assets ---
 // We keep the runner player's sprites in their own object.
