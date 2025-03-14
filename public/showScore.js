@@ -74,7 +74,22 @@ export function showScoreScreen() {
       line.style.width = '90%';
       line.style.textAlign = 'center';
       line.style.whiteSpace = 'nowrap';
-      line.textContent = game.charAt(0).toUpperCase() + game.slice(1) + ': ' + score;
+      switch (game) {
+        case "breakout":
+          line.textContent = "Breakout: " + score;
+          break;
+        case "frogger":
+          line.textContent = "Frogger: " + score;
+          break;
+        case "spaceinvaders":
+          line.textContent = "Invaders: " + score;
+          break;
+        case "runner":
+          line.textContent = "Runner: " + score;
+          break;
+        default:
+          break;
+      }
       scoreContainer.appendChild(line);
     }
   });
