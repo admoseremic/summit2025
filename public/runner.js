@@ -228,9 +228,9 @@ function generateObstacle() {
 function updateRunner(deltaTime) {
   // Increase speed over time.
   runnerState.speedIncreaseTimer += deltaTime;
-  if (runnerState.speedIncreaseTimer >= 3) {
+  if (runnerState.speedIncreaseTimer >= 4) {
     runnerState.speedMultiplier *= 1.1;
-    runnerState.speedIncreaseTimer -= 3;
+    runnerState.speedIncreaseTimer -= 4;
   }
 
   const moveDist = runnerState.terrainSpeed * runnerState.speedMultiplier * deltaTime;

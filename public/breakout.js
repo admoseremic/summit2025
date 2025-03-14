@@ -147,8 +147,8 @@ function gameLoopBreakout(timestamp) {
 
 // --- Update Logic ---
 function updateBreakout(deltaTime) {
-    // Paddle movement: Lerp the paddle's x toward targetX (at 10 arcade units/sec).
-    const paddleLerpSpeed = 10;
+    // Paddle movement: Lerp the paddle's x toward targetX (at 12 arcade units/sec).
+    const paddleLerpSpeed = 12;
     let diff = breakoutPaddle.targetX - breakoutPaddle.x;
     let step = paddleLerpSpeed * deltaTime;
     if (Math.abs(diff) <= step) {
@@ -256,11 +256,11 @@ function updateBreakout(deltaTime) {
         }
     }
 
-    // Increase ball speed every 10 seconds (applies to all balls).
+    // Increase ball speed every 5 seconds (applies to all balls).
     speedTimer += deltaTime;
-    if (speedTimer >= 10) {
+    if (speedTimer >= 5) {
         ballSpeed += 1;
-        speedTimer -= 10;
+        speedTimer -= 5;
         breakoutBalls.forEach(ball => {
             let angle = Math.atan2(ball.vx, -ball.vy);
             ball.vx = ballSpeed * Math.sin(angle);
