@@ -61,7 +61,8 @@ function initRunner() {
       state: "run",       // "run", "jump", "fall", or "hit"
       frameIndex: 0,
       frameTimer: 0,
-      frameDuration: 100  // milliseconds per frame
+      frameDuration: 100,  // milliseconds per frame
+      frameDirection: 1
     },
     // Ground system: fixed array of exactly 10 columns (9 on-screen + 1 off-screen to the right)
     groundProfile: [],
@@ -381,14 +382,23 @@ function updatePlayerAnimation(deltaTime) {
   const animFrames = arcadeState.images.player[player.state];
   if (!animFrames || animFrames.length === 0) return;
 
-  // Ensure frameIndex is within bounds.
-  if (player.frameIndex >= animFrames.length) {
+  // If there's only one frame, no oscillation is needed.
+  if (animFrames.length === 1) {
     player.frameIndex = 0;
+    return;
   }
 
-  player.frameTimer += deltaTime * 1000; // Convert seconds to ms.
+  // For states with multiple frames (oscillating animation)
+  player.frameTimer += deltaTime * 1000; // Convert seconds to milliseconds
   if (player.frameTimer >= player.frameDuration) {
-    player.frameIndex = (player.frameIndex + 1) % animFrames.length;
+    // Reverse direction if we hit the end or beginning.
+    if (player.frameIndex === animFrames.length - 1) {
+      player.frameDirection = -1;
+    } else if (player.frameIndex === 0) {
+      player.frameDirection = 1;
+    }
+
+    player.frameIndex += player.frameDirection;
     player.frameTimer = 0;
   }
 }
