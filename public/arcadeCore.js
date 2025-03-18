@@ -10,25 +10,12 @@ import { showScoreScreen } from './showScore.js';
 // Create an AudioContext (with vendor prefix fallback)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
-// Attempt to unlock the AudioContext on the first user gesture.
-function unlockAudioContext() {
+document.addEventListener('touchstart', function resumeAudioContext() {
   if (audioContext.state === 'suspended') {
-    audioContext.resume().then(() => {
-      // Optionally play a silent buffer to ensure full unlocking.
-      const buffer = audioContext.createBuffer(1, 1, audioContext.sampleRate);
-      const source = audioContext.createBufferSource();
-      source.buffer = buffer;
-      source.connect(audioContext.destination);
-      source.start(0);
-    });
+    audioContext.resume();
   }
-  document.removeEventListener('touchstart', unlockAudioContext);
-  document.removeEventListener('click', unlockAudioContext);
-}
-
-// Listen for both touch and click events.
-document.addEventListener('touchstart', unlockAudioContext, false);
-document.addEventListener('click', unlockAudioContext, false);
+  document.removeEventListener('touchstart', resumeAudioContext);
+}, false);
 
 // Utility function to load and decode a sound file.
 async function loadSound(url) {
