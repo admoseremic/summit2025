@@ -7,8 +7,8 @@ import { startRunner } from './runner.js';
 import { startSpaceInvaders } from './spaceinvaders.js';
 import { showScoreScreen } from './showScore.js';
 
-// Create an AudioContext (with vendor prefix fallback)
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+// Create an AudioContext
+const audioContext = new window.AudioContext;
 
 // Utility function to load and decode a sound file.
 async function loadSound(url) {
@@ -91,7 +91,6 @@ function playSound(audioBuffer) {
 arcadeState.playSound = playSound;
 
 arcadeState.images.ship.src = 'images/ship.png';
-arcadeState.images.enemy1.src = 'images/si_pm_1.png';
 arcadeState.images.ball.src = 'images/ball.png';
 arcadeState.images.frog.src = 'images/frog.png';
 arcadeState.images.skinnyLog.src = 'images/log-skinny.png';
