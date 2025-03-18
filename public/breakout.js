@@ -5,7 +5,8 @@
 //   isGameOver, currentScore, animationFrameId,
 //   and functions showTitleScreen(), hideTitleScreen()
 // Also assumes that Firebase (db) and username are set up in arcadeCore.js,
-// and that images brickImg and ballImg are loaded (if available).
+// and that images brickImg1, brickImg2, brickImg3, brickImg4 (for bricks) 
+// and ballImg (for the ball) are loaded (if available).
 
 // --- Global Breakout Variables (module-scoped) ---
 let breakoutPaddle;    // Paddle object
@@ -79,29 +80,46 @@ function initBreakout() {
 
 function initBricks() {
     bricks = [];
+    // Create an array of brick images from arcadeState.images.
+    const brickImages = [
+        arcadeState.images.brick1,
+        arcadeState.images.brick2,
+        arcadeState.images.brick3,
+        arcadeState.images.brick4
+    ];
+    
     // Brick grid: starts at arcade row 1 (the second row) and spans 6 rows.
     // Each grid cell (1 unit square) contains 2 bricks stacked vertically.
-    // Each brick's base size: width = 1 - 0.2 = 0.8, height = 0.5 - 0.2 = 0.3.
+    // Each brick's base size: width = 0.8, height = 0.3.
     for (let r = 0; r < 6; r++) {
         for (let c = 0; c < arcadeState.baseCols; c++) {
             let cellX = c;
             let cellY = r + 1; // Rows 1 to 6.
             let brickWidth = 0.8;
             let brickHeight = 0.3;
+            
+            // Randomly select a brick image for the top brick.
+            let topSprite = brickImages[Math.floor(Math.random() * brickImages.length)];
             let topBrick = {
                 x: cellX + 0.1,
                 y: cellY + 0.1,
                 width: brickWidth,
                 height: brickHeight,
-                exists: true
+                exists: true,
+                sprite: topSprite
             };
+            
+            // Randomly select a brick image for the bottom brick.
+            let bottomSprite = brickImages[Math.floor(Math.random() * brickImages.length)];
             let bottomBrick = {
                 x: cellX + 0.1,
-                y: cellY + 0.5 + 0.1, // cellY + 0.6
+                y: cellY + 0.6, // cellY + 0.5 + 0.1
                 width: brickWidth,
                 height: brickHeight,
-                exists: true
+                exists: true,
+                sprite: bottomSprite
             };
+            
             bricks.push(topBrick, bottomBrick);
         }
     }
@@ -242,7 +260,6 @@ function updateBreakout(deltaTime) {
                     arcadeState.playSound(arcadeState.sounds.ballBrick);
 
                     // Determine which side was hit.
-                    
                     let overlapX = Math.min(ball.x + ball.width - brick.x, brick.x + brick.width - ball.x);
                     let overlapY = Math.min(ball.y + ball.height - brick.y, brick.y + brick.height - ball.y);
                     if (overlapX < overlapY) {
@@ -302,12 +319,11 @@ function updateBreakout(deltaTime) {
 function renderBreakout() {
     arcadeState.ctx.clearRect(0, 0, arcadeState.canvas.width, arcadeState.canvas.height);
 
-    // Use cached cell dimensions: cellW and cellH.
     // Draw bricks.
     bricks.forEach(brick => {
         if (!brick.exists) return;
-        if (typeof brickImg !== "undefined" && brickImg) {
-            arcadeState.ctx.drawImage(brickImg, brick.x * cellW, brick.y * cellH, brick.width * cellW, brick.height * cellH);
+        if (brick.sprite) {
+            arcadeState.ctx.drawImage(brick.sprite, brick.x * cellW, brick.y * cellH, brick.width * cellW, brick.height * cellH);
         } else {
             arcadeState.ctx.fillStyle = 'white';
             arcadeState.ctx.fillRect(brick.x * cellW, brick.y * cellH, brick.width * cellW, brick.height * cellH);

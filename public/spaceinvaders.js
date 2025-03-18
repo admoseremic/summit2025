@@ -437,9 +437,27 @@ function renderSpaceInvaders() {
   });
 
   // Render enemy bullets.
-  arcadeState.ctx.fillStyle = "yellow";
+  // Render enemy bullets with a sprite.
   enemyBullets.forEach(bullet => {
-    arcadeState.ctx.fillRect(bullet.x * cellW, bullet.y * cellH, bullet.width * cellW, bullet.height * cellH);
+    const sprite = arcadeState.images.question;
+    // Calculate the bullet's dimensions in canvas pixels.
+    const bulletW = bullet.width * cellW;
+    const bulletH = bullet.height * cellH;
+    // Desired sprite height is twice the bullet height.
+    const desiredHeight = bulletH * 2;
+    // Maintain aspect ratio using the sprite's natural dimensions.
+    const scale = desiredHeight / sprite.naturalHeight;
+    const desiredWidth = sprite.naturalWidth * scale;
+
+    // Compute the bullet center in canvas coordinates.
+    const bulletCenterX = bullet.x * cellW + bulletW / 2;
+    const bulletCenterY = bullet.y * cellH + bulletH / 2;
+
+    // Compute destination coordinates so the sprite is centered on the bullet.
+    const dx = bulletCenterX - desiredWidth / 2;
+    const dy = bulletCenterY - desiredHeight / 2;
+
+    arcadeState.ctx.drawImage(sprite, dx, dy, desiredWidth, desiredHeight);
   });
 
   // Render enemies using animated invader sprites.

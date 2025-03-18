@@ -52,7 +52,12 @@ const arcadeState = {
     invader2a: new Image(),
     invader2b: new Image(),
     invader3a: new Image(),
-    invader3b: new Image()
+    invader3b: new Image(),
+    brick1: new Image(),
+    brick2: new Image(),
+    brick3: new Image(),
+    brick4: new Image(),
+    question: new Image()
   }
 };
 
@@ -103,7 +108,11 @@ arcadeState.images.invader2a.src = 'images/invader2a.png';
 arcadeState.images.invader2b.src = 'images/invader2b.png';
 arcadeState.images.invader3a.src = 'images/invader3a.png';
 arcadeState.images.invader3b.src = 'images/invader3b.png';
-
+arcadeState.images.brick1.src = 'images/brick1.png';
+arcadeState.images.brick2.src = 'images/brick2.png';
+arcadeState.images.brick3.src = 'images/brick3.png';
+arcadeState.images.brick4.src = 'images/brick4.png';
+arcadeState.images.question.src = 'images/question.png';
 
 // --- Player Animation Assets ---
 // We keep the runner player's sprites in their own object.
