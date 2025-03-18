@@ -10,6 +10,13 @@ import { showScoreScreen } from './showScore.js';
 // Create an AudioContext (with vendor prefix fallback)
 const audioContext = new (window.AudioContext || window.webkitAudioContext)();
 
+document.addEventListener('touchstart', function resumeAudioContext() {
+  if (audioContext.state === 'suspended') {
+    audioContext.resume();
+  }
+  document.removeEventListener('touchstart', resumeAudioContext);
+}, false);
+
 // Utility function to load and decode a sound file.
 async function loadSound(url) {
   const response = await fetch(url);
@@ -91,7 +98,6 @@ function playSound(audioBuffer) {
 arcadeState.playSound = playSound;
 
 arcadeState.images.ship.src = 'images/ship.png';
-arcadeState.images.enemy1.src = 'images/si_pm_1.png';
 arcadeState.images.ball.src = 'images/ball.png';
 arcadeState.images.frog.src = 'images/frog.png';
 arcadeState.images.skinnyLog.src = 'images/log-skinny.png';
