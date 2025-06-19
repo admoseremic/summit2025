@@ -31,7 +31,7 @@ let cellW, cellH;
 // Called by arcadeCore.js when currentGame is set to "breakout"
 function startBreakout() {
     // Show the title screen on first load, then initialize breakout.
-    showTitleScreen('"Breakout" of \nLimiting Datasets!', () => {
+    showTitleScreen('Governance Breakout!', () => {
         hideTitleScreen();
         initBreakout();
     });

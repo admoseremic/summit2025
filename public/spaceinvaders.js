@@ -553,7 +553,7 @@ function initSpaceInvaders() {
 
 // --- Start Space Invaders ---
 function startSpaceInvaders() {
-  showTitleScreen('Data Viz Invaders!', () => {
+  showTitleScreen('Collaboration Invaders!', () => {
     hideTitleScreen();
     initSpaceInvaders();
   });

@@ -209,7 +209,7 @@ function createLogForRow(rowIndex, direction) {
 // Entry Point: Start Frogger
 // --------------------
 function startFrogger() {
-  showTitleScreen('CJA Leapfrogger!', () => {
+  showTitleScreen('Analysis Frogger!', () => {
     hideTitleScreen();
     initFrogger();
   });
