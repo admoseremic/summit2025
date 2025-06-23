@@ -553,7 +553,7 @@ function initSpaceInvaders() {
 
 // --- Start Space Invaders ---
 function startSpaceInvaders() {
-  showTitleScreen('Collaboration Invaders!', () => {
+  showTitleScreen('Collab Invaders!', () => {
     hideTitleScreen();
     initSpaceInvaders();
   });

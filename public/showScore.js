@@ -61,7 +61,7 @@ export function showScoreScreen() {
   scoreContainer.appendChild(usernameEl);
 
   // Display individual game scores (only if nonzero)
-  const games = ['breakout', 'runner', 'spaceinvaders', 'frogger'];
+  const games = ['breakout', 'frogger', 'spaceinvaders', 'runner'];
   let total = 0;
   games.forEach(game => {
     let score = parseInt(localStorage.getItem('highScore_' + game)) || 0;
