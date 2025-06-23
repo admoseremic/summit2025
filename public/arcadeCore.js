@@ -142,6 +142,24 @@ arcadeState.images.player.hit.push(hitImg);
 
 window.arcadeState = arcadeState;
 
+/* -----------------------------------------------------------------
+ * Freeze score while the page is hidden (minimised / background tab)
+ * -----------------------------------------------------------------*/
+(() => {
+  let _score = 0;                         // private backing store
+
+  Object.defineProperty(arcadeState, 'currentScore', {
+    get() { return _score; },
+    set(val) {
+      if (document.hidden) return;        // ignore hidden-tab writes
+      _score = val;
+      if (arcadeState.scoreElement) {
+        arcadeState.scoreElement.innerText = 'Score: ' + _score;
+      }
+    }
+  });
+})();
+
 const ASPECT_RATIO = 9 / 16;
 
 /*************************************************************
