@@ -142,20 +142,31 @@ arcadeState.images.player.hit.push(hitImg);
 
 window.arcadeState = arcadeState;
 
-/* -----------------------------------------------------------------
- * Freeze score while the page is hidden (minimised / background tab)
- * -----------------------------------------------------------------*/
+// --- Freeze score while the page/app is not visible -------------
 (() => {
-  let _score = 0;                         // private backing store
+  let _score = 0;
 
-  Object.defineProperty(arcadeState, 'currentScore', {
+  Object.defineProperty(arcadeState, "currentScore", {
+    configurable: true,
     get() { return _score; },
-    set(val) {
-      if (document.hidden) return;        // ignore hidden-tab writes
-      _score = val;
-      if (arcadeState.scoreElement) {
-        arcadeState.scoreElement.innerText = 'Score: ' + _score;
+    set(v) {
+      // Only accept the write when the tab is visible
+      if (document.visibilityState === "visible") {
+        _score = v;
+        // Keep the on-screen text in sync in case a game
+        // tries to bypass our helper in the middle of a frame
+        if (arcadeState.scoreElement) {
+          arcadeState.scoreElement.innerText = "Score: " + _score;
+        }
       }
+      // Otherwise ignore the write silently
+    }
+  });
+
+  // When the player comes back, refresh the scoreboard once
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible" && arcadeState.scoreElement) {
+      arcadeState.scoreElement.innerText = "Score: " + _score;
     }
   });
 })();
