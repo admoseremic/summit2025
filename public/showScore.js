@@ -1,136 +1,133 @@
 // showScore.js
+// showScore.js
 export function showScoreScreen() {
-  // Clear the game container
+  /* ---------- 1. clear & size the wrapper exactly as before ---------- */
   const container = document.getElementById('gameContent');
   container.innerHTML = '';
 
-  // Create a wrapper that mimics your canvas setup
   const wrapper = document.createElement('div');
-  wrapper.id = "scoreWrapper";
-  wrapper.style.position = "relative";
-  wrapper.style.padding = "4px"; // same as your canvas wrapper
-  wrapper.style.margin = "auto";
+  wrapper.id = 'scoreWrapper';
+  Object.assign(wrapper.style, { position: 'relative', padding: '4px', margin: 'auto' });
   container.appendChild(wrapper);
 
-  // Calculate available width/height using the same 9:16 aspect ratio logic
-  const availableWidth = window.innerWidth - 8;
-  const availableHeight = window.innerHeight - 8;
   const ASPECT_RATIO = 9 / 16;
-  let width, height;
-  if (availableWidth / availableHeight > ASPECT_RATIO) {
-    height = availableHeight;
-    width = height * ASPECT_RATIO;
-  } else {
-    width = availableWidth;
-    height = width / ASPECT_RATIO;
-  }
+  const availW = window.innerWidth - 8;
+  const availH = window.innerHeight - 8;
+  const height = (availW / availH > ASPECT_RATIO) ? availH : availW / ASPECT_RATIO;
+  const width = height * ASPECT_RATIO;
 
-  // Create the score container with a white border
   const scoreContainer = document.createElement('div');
-  scoreContainer.id = "scoreScreen";
-  scoreContainer.style.width = width + "px";
-  scoreContainer.style.height = height + "px";
-  scoreContainer.style.border = '4px solid white';
-  scoreContainer.style.display = 'flex';
-  scoreContainer.style.flexDirection = 'column';
-  scoreContainer.style.justifyContent = 'center';
-  scoreContainer.style.alignItems = 'center';
-  scoreContainer.style.boxSizing = 'border-box';
-  scoreContainer.style.padding = '10px';
-  scoreContainer.style.fontFamily = '"Press Start 2P", sans-serif';
+  scoreContainer.id = 'scoreScreen';
+  Object.assign(scoreContainer.style, {
+    width: width + 'px',
+    height: height + 'px',
+    border: '4px solid white',
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'center',
+    boxSizing: 'border-box',
+    padding: '10px',
+    fontFamily: '"Press Start 2P", monospace'
+  });
   wrapper.appendChild(scoreContainer);
 
-  // Set font sizes based on container width (adjusted to avoid wrapping)
-  const usernameFontSize = width * 0.07;
-  const scoreFontSize = width * 0.05;
-  const totalLabelFontSize = width * 0.06;
-  const totalScoreFontSize = width * 0.08;
+  /* ---------- 2. username & individual scores ---------- */
+  const usernameSize = width * 0.07;
+  const scoreSize = width * 0.05;
+  const totalLblSize = width * 0.06;
+  const totalValSize = width * 0.08;
 
-  // Get the username from localStorage
-  const username = localStorage.getItem('username') || "Guest";
+  const username = localStorage.getItem('username') || 'Guest';
+  const nameEl = document.createElement('h2');
+  Object.assign(nameEl.style, {
+    color: 'red', fontSize: usernameSize + 'px',
+    marginBottom: '10px', width: '90%', textAlign: 'center', whiteSpace: 'nowrap'
+  });
+  nameEl.textContent = username;
+  scoreContainer.appendChild(nameEl);
 
-  // Username element (red)
-  const usernameEl = document.createElement('h2');
-  usernameEl.textContent = username;
-  usernameEl.style.color = 'red';
-  usernameEl.style.fontSize = usernameFontSize + "px";
-  usernameEl.style.marginBottom = '10px';
-  usernameEl.style.width = '90%';
-  usernameEl.style.textAlign = 'center';
-  usernameEl.style.whiteSpace = 'nowrap';
-  scoreContainer.appendChild(usernameEl);
-
-  // Display individual game scores (only if nonzero)
   const games = ['breakout', 'frogger', 'spaceinvaders', 'runner'];
   let total = 0;
   games.forEach(game => {
-    let score = parseInt(localStorage.getItem('highScore_' + game)) || 0;
+    const score = parseInt(localStorage.getItem('highScore_' + game)) || 0;
     if (score > 0) {
       total += score;
       const line = document.createElement('div');
-      line.style.fontSize = scoreFontSize + "px";
-      line.style.color = 'white';
-      line.style.marginBottom = '8px';
-      line.style.width = '90%';
-      line.style.textAlign = 'center';
-      line.style.whiteSpace = 'nowrap';
-      switch (game) {
-        case "breakout":
-          line.textContent = "Breakout: " + score;
-          break;
-        case "frogger":
-          line.textContent = "Frogger: " + score;
-          break;
-        case "spaceinvaders":
-          line.textContent = "Invaders: " + score;
-          break;
-        case "runner":
-          line.textContent = "Runner: " + score;
-          break;
-        default:
-          break;
-      }
+      line.style.cssText = `font-size:${scoreSize}px;color:white;margin-bottom:8px;width:90%;text-align:center;white-space:nowrap`;
+      line.textContent =
+        (game === 'spaceinvaders' ? 'Invaders' : game.charAt(0).toUpperCase() + game.slice(1)) + ': ' + score;
       scoreContainer.appendChild(line);
     }
   });
 
-  // Display cumulative score (label and total)
-  const totalLabel = document.createElement('div');
-  totalLabel.style.fontSize = totalLabelFontSize + "px";
-  totalLabel.style.color = 'yellow';
-  totalLabel.style.marginTop = '20px';
-  totalLabel.style.marginBottom = '8px';
-  totalLabel.style.width = '90%';
-  totalLabel.style.textAlign = 'center';
-  totalLabel.style.whiteSpace = 'nowrap';
-  totalLabel.textContent = 'TOTAL SCORE';
-  scoreContainer.appendChild(totalLabel);
+  /* ---------- 3. TOTAL ---------- */
+  const totalLbl = document.createElement('div');
+  Object.assign(totalLbl.style, {
+    fontSize: totalLblSize + 'px', color: 'yellow', margin: '20px 0 8px',
+    width: '90%', textAlign: 'center', whiteSpace: 'nowrap'
+  });
+  totalLbl.textContent = 'TOTAL SCORE';
+  scoreContainer.appendChild(totalLbl);
 
-  const totalScoreEl = document.createElement('div');
-  totalScoreEl.style.fontSize = totalScoreFontSize + "px";
-  totalScoreEl.style.color = 'yellow';
-  totalScoreEl.style.width = '90%';
-  totalScoreEl.style.textAlign = 'center';
-  totalScoreEl.style.whiteSpace = 'nowrap';
-  totalScoreEl.textContent = total;
-  scoreContainer.appendChild(totalScoreEl);
+  const totalVal = document.createElement('div');
+  Object.assign(totalVal.style, {
+    fontSize: totalValSize + 'px', color: 'yellow',
+    width: '90%', textAlign: 'center', whiteSpace: 'nowrap'
+  });
+  totalVal.textContent = total;
+  scoreContainer.appendChild(totalVal);
 
-  // Create a hyperlink at the bottom
-  const linkEl = document.createElement('a');
-  linkEl.href = "https://summit2025.trevorwithdata.com/tips_summary.html"; // Placeholder URL
-  linkEl.textContent = "Link to resources!";
-  linkEl.style.color = 'blue';
-  linkEl.style.fontSize = (width * 0.04) + "px"; // Adjust as needed
-  linkEl.style.marginTop = "100px";
-  linkEl.style.display = 'none'; // Initially hide the link
-  linkEl.style.textAlign = 'center';
-  linkEl.target = "_blank"; // Open in new tab
-  scoreContainer.appendChild(linkEl);
-
-  firebase.database().ref("mechanics/showScore/linkVisible").on('value', snapshot => {
-    const linkVisible = !!snapshot.val(); // Convert to boolean
-    linkEl.style.display = linkVisible ? 'block' : 'none';
+  /* ---------- 4. NEW “play-a-game” button row (hidden by default) ---------- */
+  const btnRow = document.createElement('div');
+  Object.assign(btnRow.style, {
+    display: 'none',            // toggled by Firebase mechanic
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: '10px',
+    margin: '40px 0 20px'
   });
 
+  const makeBtn = (label, gameName) => {
+    const b = document.createElement('button');
+    b.textContent = label;
+    Object.assign(b.style, {
+      backgroundColor: '#000',
+      color: '#fff',
+      fontFamily: '"Press Start 2P", monospace',
+      fontSize: (width * 0.035) + 'px',
+      padding: '10px 18px',
+      border: '4px solid white',
+      cursor: 'pointer'
+    });
+    b.onclick = () => import('./arcadeCore.js').then(({ loadGame }) => loadGame(gameName));
+    return b;
+  };
+
+  btnRow.appendChild(makeBtn('Breakout', 'breakout'));
+  btnRow.appendChild(makeBtn('Frogger', 'frogger'));
+  btnRow.appendChild(makeBtn('Invaders', 'spaceinvaders'));
+  btnRow.appendChild(makeBtn('Runner', 'runner'));
+  scoreContainer.appendChild(btnRow);
+
+  /* ---------- 5. resources link (unchanged) ---------- */
+  const linkEl = document.createElement('a');
+  Object.assign(linkEl.style, {
+    color: 'blue', fontSize: (width * 0.04) + 'px', marginTop: '100px',
+    display: 'none', textAlign: 'center'
+  });
+  linkEl.href = 'https://summit2025.trevorwithdata.com/tips_summary.html';
+  linkEl.target = '_blank';
+  linkEl.textContent = 'Link to resources!';
+  scoreContainer.appendChild(linkEl);
+
+  /* ---------- 6. Firebase bindings ---------- */
+  const db = firebase.database();
+  db.ref('mechanics/showScore/linkVisible')
+    .on('value', snap => linkEl.style.display = snap.val() ? 'block' : 'none');
+
+  db.ref('mechanics/showScore/allowAllGames')
+    .on('value', snap => btnRow.style.display = snap.val() ? 'flex' : 'none');
 }
 

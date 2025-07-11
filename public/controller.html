@@ -379,6 +379,19 @@
           .catch(err => console.error("Error clearing leaderboards:", err));
       }
     }
+    function toggleAllowAllGames() {
+      if (!db) return;
+      const ref = db.ref('mechanics/showScore/allowAllGames');
+      ref.once('value').then(snap => {
+        const current = !!snap.val();
+        ref.set(!current)
+          .then(() => {
+            console.log('Toggled allowAllGames to', !current);
+            setMechanicButtonState('mechanics/showScore/allowAllGames', 'btn-allowAllGames');
+          })
+          .catch(err => console.error('Error toggling allowAllGames:', err));
+      });
+    }
   </script>
 </head>
 
@@ -432,6 +445,7 @@
       <div class="mechanics-group" id="showScoreMechanics" style="display: none;">
         <h2>Show Score Mechanics</h2>
         <button id="btn-showScoreLink" onclick="toggleShowScoreLink()">Toggle link display</button>
+        <button id="btn-allowAllGames" onclick="toggleAllowAllGames()">Allow all games</button>
       </div>
     </div>
   </div>
